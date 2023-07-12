@@ -1,4 +1,4 @@
-# LowRankMatrixCompletion
+# Low Rank Matrix Completion
 AltGDMin compared with three other benchmark methods for the Low Rank Matrix Completion. 
 This repository contains MATLAB code to reproduce results in \url{...}
 
