@@ -6,7 +6,7 @@ clear all
 r = 5;
 n = 1*3000;
 q = 1*5000;
-% generate rank-r X
+% generate rank-r X*
 X = randn(n,q);
 [U,Sigma, V] = svd(X,'econ');
 VT = V';
@@ -67,6 +67,7 @@ T_inner = 10; % number of gradient descent iterations
 kProjGD = 1;
 [SDValsProjGD,timeArrProjGD] = ProjGD(Xzeros,r,Ustr, kProjGD*T,p,idxC);
 % --- Plotting (Error against iteration) 
+% --- 
 t = 1:space:T;
 figure
 semilogy(t,SDValsAltMin(t),'DisplayName', ...
@@ -101,16 +102,16 @@ xlabel('Iterations t',FontSize=11)
 title("n = " + n + ", q = " + q +...
       ", r = " + r + ", p = " + p + '.',...
       'Interpreter', 'Latex', 'FontSize',15)
-stringTitle = ['BenchmarksIter',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+stringTitle = ['ErrAgnstIter_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
                'T_',num2str(T),'_id',num2str(randi(1e3,1)),'.fig'];
  
-%save matlab (.fig) figure
-%savefig(stringTitle)
-stringTitlePdf = ['Err_Iter_tInner_',num2str(T_inner),'_n_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+% save matlab (.fig) figure
+savefig(stringTitle)
+stringTitlePdf = ['ErrAgnstIter_','_n_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
                 'T_',num2str(T),'_id',num2str(randi(1e3,1)),'.pdf'];
-%save pdf figure
-%exportgraphics(gcf,stringTitlePdf)
-% Plotting (Error against time)
+% save pdf figure
+exportgraphics(gcf,stringTitlePdf)
+% Plotting (Error against time) %1(b), 1(d)%
 figure
 t = 1:space:T;
 semilogy(timeArrAltMin(t),SDValsAltMin(t), ...
@@ -143,16 +144,16 @@ xlabel('Time/seconds',FontSize=11)
 title("n = " + n + ", q = " + q +...
       ", r = " + r + ", p = " + p + '.',...
        'Interpreter', 'Latex', 'FontSize',14)
-stringTitle = ['BenchmarksTime',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+stringTitle = ['ErrAgnstTime',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
                'T_',num2str(T),'_id',num2str(randi(1e3,1)),'.fig'];
 
 % save matlab (.fig) figure
 savefig(stringTitle)
-stringTitlePdf = ['BenchmarksTime',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+stringTitlePdf = ['ErrAgnstTime',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
                 'T_',num2str(T),'_id',num2str(randi(1e3,1)),'.pdf'];
 % save pdf figure
 exportgraphics(gcf,stringTitlePdf)
-%---- Function routines for Algorithms
+%--- Function routines for Algorithms
 function [SDVals, timeArr] = altGDMin(Xzeros,r,p,...
                                       Ustr, T,...
                                       rowIdx,Xcol)
@@ -189,8 +190,8 @@ function [SDVals, timeArr] = altGDMin(Xzeros,r,p,...
     end
 end
 function [SDVals,timeArr]  = altMinPrvt(Xzeros,r,p, ...
-                                   Ustr,T, ...
-                                   rowIdx,Xcol,T_inner)
+                                        Ustr,T, ...
+                                        rowIdx,Xcol,T_inner)
     n = size(Xzeros,1);
     q = size(Xzeros,2);
     % SVD initialization
@@ -310,10 +311,8 @@ function [SDVals, timeArr] = ProjGD(Xzeros,r,Ustr,T,p,idxC)
     for i = 1 : T
         grad = X - Xzeros;
         grad(idxC) = 0;
-        %X = sparse(X - stepSize*grad);
         X = X - stepSize*grad;
         tStart = tic;
-        %[U,S,V] = svds(X,r);
         [U,S,V] = svd(X,'econ');
         U = U(:,1:r);
         S = S(1:r,1:r);
