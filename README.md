@@ -6,4 +6,4 @@ This repository contains MATLAB code to reproduce results in \url{...}
   
 - The code might run without the Parallel Computing toolbox installed but the results will not be reproduced because the `parfor` loop is replaced by the standard `for` loop.
 
-- The `parfor' loop is key to modelling a distribtued setup.
+- The `parfor` loop is key to modelling a distribtued setup.
