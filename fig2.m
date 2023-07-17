@@ -5,10 +5,10 @@ warning('off','all')
 % To do: incoherence specification in low rank matrix generation
 r = 5;
 n = 3000;
-q = 3000;
+q = 5000;
 % generate rank-r X
 %_-----`-----------------------------------
-MC = 15;
+MC = 25;
 p_AltMin = [0.003:0.001:0.01]; 
 %p_AltGDMin = [0.01:0.005:0.02];
 %p_Rest = [0.035:0.005:0.060];
