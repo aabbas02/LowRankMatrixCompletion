@@ -2,7 +2,6 @@ clc
 close all
 clear all
 warning('off','all')
-% To do: incoherence specification in low rank matrix generation
 r = 5;
 n = 3000;
 q = 5000;
