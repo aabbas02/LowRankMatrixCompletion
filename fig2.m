@@ -52,7 +52,7 @@ for l = 1 : length(p_)
         [SDValsrbstPCA] = robustPCA(Xzeros,r,Ustr, T,p, idxC);
         numPass(1,l) = numPass(1,l) + min(SDValsrbstPCA < 1e-11);
         %0
-        % --- AltGDMin (Decentralized)
+        % --- AltGDMin
         [rowSort, colSort, ~] = find(Xzeros);
         idx = sub2ind([n,q],rowSort,colSort);
         Xvec = X(idx);

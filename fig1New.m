@@ -3,9 +3,9 @@ close all
 clear all
 % n,q,r,p set according to Figure 1a, 1c. 
 % For figure 1b, 1d, change r = 10, p = 0.1.
-r = 10;
-n = 1*3000;
-q = 1*5000;
+r = 2;
+n = 3000;
+q = 5000;
 % generate rank-r X*
 X = randn(n,q);
 [U,Sigma, V] = svd(X,'econ');
@@ -14,7 +14,7 @@ X = U(:,1:r)*Sigma(1:r,1:r)*VT(1:r,:);
 Ustr = U(:,1:r);
 %--------------------------------------------------------------------------
 % sub sample X with probaility p
-p = 0.1;
+p = 0.05;
 idx = randperm(n*q);
 idx = idx(1:round(p*n*q));
 idxC = setdiff(1:n*q,idx);
@@ -37,7 +37,7 @@ end
 space = 5;
 T = 100 + space;
 % ------ Start parallelpool (this takes a few minutes)
-parpool
+%parpool
 %--- AltGD (Benchmark) 
 krbstPCA = 2; %number of extra  (compared to AltMin) iterations for AltGDMin
 %SDValsrbstPCA = zeros(1,T)
@@ -45,25 +45,34 @@ krbstPCA = 2; %number of extra  (compared to AltMin) iterations for AltGDMin
 0
 % --- AltGDMin (Proposed)
 kAltGDMin = 2; % number of extra iterations for AltGDMin
-[rowSort, colSort, ~] = find(Xzeros);
-idx = sub2ind([n,q],rowSort,colSort);
-Xvec = X(idx);
+%[rowSort, colSort, ~] = find(Xzeros);
+%idx = sub2ind([n,q],rowSort,colSort);
+%Xvec = X(idx);
 [SDValsAltGDMin, timeArrAltGDMin] = altGDMin(Xzeros,r,p, ...
                                              Ustr, kAltGDMin*T, ...
                                              rowIdx,Xcol);
 1
+% --- AltGDMin (Centralized)
+[rowSort, colSort, ~] = find(Xzeros);
+idx = sub2ind([n,q],rowSort,colSort);
+Xvec = X(idx);
+[SDValsAltGDMinCntrl,timeArrAltGDMinCntrl] = altGDMinCntrl(Xvec,r, ...
+                                             rowSort,colSort,Ustr,Xzeros, kAltGDMin*T,p, ...
+                                             rowIdx,Xcol);
+
+2
 % --- AltMin (Benchmark)
 [SDValsAltMin, timeArrAltMin] = altMin(Xzeros,r,p, ...
 									   Ustr,T, ...
 									   rowIdx,Xcol,colIdx,Xrow);
-2
+3
 % --- AltMinPrvt (Benchmark)
 T_inner = 10; % number of gradient descent iterations
 [SDValsAltMinPrvt, timeArrAltMinPrvt] = altMinPrvt(Xzeros,r,p, ...
                                                    Ustr,T,...
                                                    rowIdx,Xcol,T_inner);
 %--------------------------------------------------------------------------
-3
+4
 % --- ProjGD 
 kProjGD = 1;
 [SDValsProjGD,timeArrProjGD] = ProjGD(Xzeros,r,Ustr, kProjGD*T,p,idxC);
@@ -78,6 +87,9 @@ hold on
 semilogy(t,SDValsAltGDMin(t),'DisplayName', ...
      'AltGDMin', ...
      'LineWidth',2.25,'Marker','+','MarkerSize',9)
+semilogy(t,SDValsAltGDMinCntrl(t),'DisplayName', ...
+     'AltGDMinCntrl', ...
+     'LineWidth',2.25,'Marker','square','MarkerSize',9)
 semilogy(t,SDValsrbstPCA(t),'DisplayName', ...
      'AltGD', ...
      'LineWidth',2.25,'Marker','*','MarkerSize',9)
@@ -114,28 +126,31 @@ stringTitlePdf = ['ErrAgnstIter_','_n_',num2str(n),'_q_',num2str(q),'_r_',num2st
 exportgraphics(gcf,stringTitlePdf)
 % Plotting (Error against time) %1(b), 1(d)%
 figure
-t = 1:space:T;
+%T = 5*space;
+t = 1:space:5*space;
 semilogy(timeArrAltMin(t),SDValsAltMin(t), ...
         'DisplayName', 'AltMin (Cntrl.)', ...
          'LineWidth',2.25,'Marker','o','MarkerSize',9)
 hold on
-semilogy(timeArrAltGDMin(1:space:T),SDValsAltGDMin(1:space:T), ...
+semilogy(timeArrAltGDMin(t),SDValsAltGDMin(t), ...
         'DisplayName','AltGDMin', ...
         'LineWidth',2.25,'Marker','+','MarkerSize',9)
-semilogy(timeArrRbstPCA(1:space:T),SDValsrbstPCA(1:space:T),...
-        'DisplayName','AltGD', ...
+semilogy(timeArrAltGDMinCntrl(t),SDValsAltGDMinCntrl(t),'DisplayName', ...
+     'AltGDMin (Cntrl.)', ...
+     'LineWidth',2.25,'Marker','square','MarkerSize',9)
+semilogy(timeArrRbstPCA(t),SDValsrbstPCA(t),...
+        'DisplayName','AltGD (Cntrl.) ', ...
         'LineWidth',2.25,'Marker','*','MarkerSize',9)
-semilogy(timeArrProjGD(1:space:T),SDValsProjGD(1:space:T), ...
-        'DisplayName', 'ProjGD', ...
-        'LineWidth',2.25,'Marker','diamond','MarkerSize',9)
-semilogy(timeArrAltMinPrvt(1:space:T),SDValsAltMinPrvt(1:space:T), ...
+semilogy(timeArrProjGD(t),SDValsProjGD(t), ...
+       'DisplayName', 'ProjGD (Cntrl.)', ...
+       'LineWidth',2.25,'Marker','diamond','MarkerSize',9)
+semilogy(timeArrAltMinPrvt(t),SDValsAltMinPrvt(t), ...
         'DisplayName','AltMin (Prvt.)',...
         'LineWidth',2.25,'Marker','square','MarkerSize',9,...
         'Color',"#A2142F")
 grid on
 % set x limit
 idxMax = find(SDValsAltGDMin < 2e-15,1);
-tMax = timeArrAltGDMin(idxMax);
 xlimits = xlim();
 xlimits(2) = min(xlimits(2),20);
 %xlimits(2) -
@@ -146,15 +161,63 @@ xlabel('Time/seconds',FontSize=11)
 title("n = " + n + ", q = " + q +...
       ", r = " + r + ", p = " + p + '.',...
        'Interpreter', 'Latex', 'FontSize',14)
-stringTitle = ['ErrAgnstTime',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+stringTitle = ['NewErrAgnstTime',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
                'T_',num2str(T),'_id',num2str(randi(1e3,1)),'.fig'];
 
 % save matlab (.fig) figure
 savefig(stringTitle)
-stringTitlePdf = ['ErrAgnstTime',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+stringTitlePdf = ['NewErrAgnstTime',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
                 'T_',num2str(T),'_id',num2str(randi(1e3,1)),'.pdf'];
 % save pdf figure
 exportgraphics(gcf,stringTitlePdf)
+figure
+%T = 5*space;
+%t = 1:space:T;
+t = 1:5:T;
+semilogy(timeArrAltMin(timeArrAltMin < 5),SDValsAltMin(timeArrAltMin < 5), ...
+        'DisplayName', 'AltMin (Cntrl.)', ...
+         'LineWidth',2.05,'Marker','o','MarkerSize',9)
+hold on
+semilogy(timeArrAltGDMin(timeArrAltGDMin < 5),SDValsAltGDMin(timeArrAltGDMin < 5), ...
+        'DisplayName','AltGDMin', ...
+        'LineWidth',1.75,'Marker','+','MarkerSize',7)
+semilogy(timeArrAltGDMinCntrl(timeArrAltGDMinCntrl < 5),SDValsAltGDMinCntrl(timeArrAltGDMinCntrl < 5),'DisplayName', ...
+     'AltGDMin (Cntrl.)', ...
+     'LineWidth',1.75,'Marker','square','MarkerSize',7)
+semilogy(timeArrRbstPCA(timeArrRbstPCA < 5),SDValsrbstPCA(timeArrRbstPCA < 5),...
+        'DisplayName','AltGD (Cntrl.)', ...
+        'LineWidth',1.75,'Marker','*','MarkerSize',7)
+semilogy(timeArrProjGD(timeArrProjGD < 5),SDValsProjGD(timeArrProjGD < 5), ...
+       'DisplayName', 'ProjGD (Cntrl.)', ...
+       'LineWidth',1.75,'Marker','diamond','MarkerSize',7)
+semilogy(timeArrAltMinPrvt(timeArrAltMinPrvt < 5),SDValsAltMinPrvt(timeArrAltMinPrvt < 5), ...
+        'DisplayName','AltMin',...
+        'LineWidth',2.25,'Marker','square','MarkerSize',9,...
+        'Color',"#A2142F")
+grid on
+% set x limit
+idxMax = find(SDValsAltGDMin < 2e-15,1);
+xlimits = xlim();
+xlimits(2) = min(xlimits(2),20);
+%xlimits(2) -
+xlim(xlimits);
+legend('Interpreter','Latex','Fontsize',9)
+ylabel('$\mathrm{SD}(\mathbf{U}^{(t)}, \mathbf{U}^*)$','Interpreter','Latex','Fontsize',15)
+xlabel('Time/seconds',FontSize=11)
+title("n = " + n + ", q = " + q +...
+      ", r = " + r + ", p = " + p + '.',...
+       'Interpreter', 'Latex', 'FontSize',14)
+stringTitle = ['NewErrAgnstTime1',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+               'T_',num2str(T),'_id',num2str(randi(1e3,1)),'.fig'];
+
+% save matlab (.fig) figure
+savefig(stringTitle)
+stringTitlePdf = ['NewErrAgnstTime1',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+                'T_',num2str(T),'_id',num2str(randi(1e3,1)),'.pdf'];
+% save pdf figure
+exportgraphics(gcf,stringTitlePdf)
+
+
 %--- Function routines for Algorithms
 function [SDVals, timeArr] = altGDMin(Xzeros,r,p,...
                                       Ustr, T,...
@@ -188,6 +251,36 @@ function [SDVals, timeArr] = altGDMin(Xzeros,r,p,...
         [U,~] = qr(U,'econ');
         tEnd = toc(tStart);
         timeArr(i + 1) = timeArr(i) + tEnd - timeExtra;
+        SDVals(i + 1) = norm( (eye(n) - U*U')*Ustr ,'fro' );
+    end
+end
+
+function [SDVals,timeArr] = altGDMinCntrl(Xvec,r, ...
+                                          row,col,Ustr,Xzeros, T,p, ...
+                                          rowIdx,Xcol)
+    n = size(Xzeros,1);
+    q = size(Xzeros,2);
+    [U0_init,S,~] = svd((1/p)*Xzeros,'econ');
+    U = U0_init(:,1:r);
+    eta = 1/(S(1,1)^2*p); %S(1,1)^2 = norm(Xzeros,2)^2/p^2, %eta = p/norm(Xzeros,2)^2;
+    SDVals = zeros(T+1,1);
+    SDVals(1) = norm((eye(n) - U*U')*Ustr ,'fro');
+    timeArr = zeros(T+1,1);
+    B = zeros(r,q);
+    for i = 1 : T
+        tStart = tic;
+        for j = 1 : q
+            B(:,j) = U(rowIdx{j},:)\Xcol{j};
+        end        
+        diff = sum(U(row,:).*B(:,col)',2) - Xvec;
+        %make sparse matrix with entries equal to diff vector, supported on idx 
+        S = sparse(row,col,diff,n,q);
+        grad = S*B';
+        U = U - eta*grad;
+        % Project U by using SVD or QR
+        [U,~] = qr(U,'econ');
+        tEnd = toc(tStart);
+        timeArr(i + 1) = timeArr(i) + tEnd;
         SDVals(i + 1) = norm( (eye(n) - U*U')*Ustr ,'fro' );
     end
 end
@@ -242,14 +335,15 @@ function [SDVals, timeArr] = altMin(Xzeros,r,p, ...
     SDVals = zeros(T+1,1);
     SDVals(1) = norm((eye(n) - U*U')*Ustr ,'fro');
     timeArr = zeros(T+1,1);
+    V = zeros(r,q);
     for i = 1 : T
         tStart = tic;
         % V update
-        parfor j = 1 : q
+        for j = 1 : q
             V(:,j) = U(rowIdx{j},:)\Xcol{j};
         end
         % U update 
-		parfor j = 1 : n
+		for j = 1 : n
 			U(j,:) = V(:,colIdx{j})'\Xrow{j};
 		end
         tQR = tic;
