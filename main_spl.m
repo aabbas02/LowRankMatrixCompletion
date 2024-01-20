@@ -1,58 +1,31 @@
 clc
 close all
-%clear all
+clear all
 r = 10;
-n = 5000;
-q = 10000;
+n = 10000;
+q = 20000;
 % sub sample X with probaility p
 eta_c = 0.75;
 p = 0.05;
-numWorkers = 4;
+numWrkrs = 10;
 space = 25;
 T = 50 + space;
 delete(gcp('nocreate'))
-parpool(numWorkers,'IdleTimeout',Inf)
+parpool(numWrkrs,'IdleTimeout',Inf,'SpmdEnabled',false)
 pool = gcp;
-wrkrs = pool.NumWorkers;
-MC = 1;
+MC = 15;
 tic 
-%{
-%1
-SDValsAltMinParfor = zeros(MC,T+1);
-timeAltMinParfor = zeros(MC,T+1);
-%2
-SDValsAltMinPrvt = zeros(MC,T+1);
-timeAltMinPrvt = zeros(MC,T+1);
-%3
-SDValsAltMinCntrl = zeros(MC,T+1);
-timeAltMinCntrl = zeros(MC, T+1);
-%4
-kAltGD = 2;
-SDValsAltGD = zeros(MC,kAltGD*T+1);
-timeAltGD = zeros(MC,kAltGD*T+1);
-%5
-kProjGD = 2;
-SDValsProjGD = zeros(MC,kProjGD*T+1);
-timeProjGD = zeros(MC,kProjGD*T+1);
-%6
-kAltGDMin = 2; % number of extra iterations for AltGDMin
-SDValsAltGDMin = zeros(MC,kAltGDMin*T+1);
-timeAltGDMin = zeros(MC,kAltGDMin*T+1);
-%7
-SDValsAltGDMineta1 = zeros(MC,kAltGDMin*T+1);
-timeAltGDMineta1 = zeros(MC,kAltGDMin*T+1);
-%}
-%--------------------------------------------------------------------------
 % generate rank-r X*
-%U = orth(randn(n,r));
-%Bstar = randn(r,q);
-%X  = U*Bstar;
-%Ustr = U(:,1:r);
+U = orth(randn(n,r));
+Bstar = randn(r,q);
+X  = U*Bstar;
+Ustr = U(:,1:r);
+ID = randi(1e5)+1e3+1;
 for mc = 1 : MC
-    U = orth(randn(n,r));
-    Bstar = randn(r,q);
-    X  = U*Bstar;
-    Ustr = U(:,1:r);
+%    U = orth(randn(n,r));
+%    Bstar = randn(r,q);
+%    X  = U*Bstar;
+%    Ustr = U(:,1:r);
     idx = randperm(n*q);
     idx = idx(1:round(p*n*q));
     idxC = setdiff(1:n*q,idx);
@@ -77,8 +50,8 @@ for mc = 1 : MC
     idx = sub2ind([n,q],rowSort,colSort);
     Xvec = X(idx);
     [SDAltGDMinCntrl(mc,:),timeAltGDMinCntrl(mc,:)] = altGDMinCntrl(Xzeros,Xvec,r,p,...
-                                                                    rowSort,colSort,rowIdx,Xcol,...
-                                                                    T,Ustr);
+                                                                   rowSort,colSort,rowIdx,Xcol,...
+                                                                   T,Ustr);
     %-----------------------------------------------------------------------------------
     
     % --- AltMin (Parfor)
@@ -87,13 +60,13 @@ for mc = 1 : MC
 									                              rowIdx,Xcol,colIdx,Xrow);
     % --- AltMin (Cntrl.)
     [SDAltMinCntrl(mc,:), timeAltMinCntrl(mc,:)] = altMinCntrl(Xzeros,r,p, ...
-                                                               Ustr,T, ...
-                                                               rowIdx,Xcol,colIdx,Xrow);
+                                                              Ustr,T, ...
+                                                              rowIdx,Xcol,colIdx,Xrow);
     % --- AltMin (Fed./Prvt.)
     T_inner =  10;
     [SDAltMinPrvt(mc,:), timeAltMinPrvt(mc,:)]  = altMinPrvt(Xzeros,r,p, ...
-                                                                Ustr,T, ...
-                                                                rowIdx,Xcol,T_inner);
+                                                               Ustr,T, ...
+                                                               rowIdx,Xcol,T_inner);
     % --- AltGD
     kAltGD = 2;
     [SDAltGD(mc,:), timeAltGD(mc,:)] = AltGD(Xzeros,r,Ustr,kAltGD*T,p,idxC);
@@ -103,18 +76,58 @@ for mc = 1 : MC
     [SDProjGD(mc,:), timeProjGD(mc,:)] = ProjGD(Xzeros,r,Ustr,kProjGD*T,p,idxC);
 
     % --- AltGDMin
-    eta_c = 0.75;
     kAltGDMin = 2;
+    eta_c = 0.75;
     [SDAltGDMin(mc,:),timeAltGDMin(mc,:)] = altGDMin(r,eta_c, ...
-                                                     Ustr,Xzeros, kAltGDMin*T,p, ...
-                                                     rowIdx,Xcol);
+                                                    Ustr,Xzeros, kAltGDMin*T,p, ...
+                                                    rowIdx,Xcol,numWrkrs);
     eta_c = 1.00;
     [SDAltGDMineta1(mc,:),timeAltGDMineta1(mc,:)] = altGDMin(r,eta_c, ...
                                                              Ustr,Xzeros, kAltGDMin*T,p, ...
-                                                             rowIdx,Xcol);
+                                                             rowIdx,Xcol,numWrkrs);
+
+    if  (mod(mc,5) == 0)
+        save("All_n_"+num2str(n)+"_q_"+num2str(q)+"_r_"+num2str(r)+"_p_"+num2str(p)+"_mc_"+num2str(mc) + "_randID_" + num2str(ID) + ".mat",...
+                               "SDAltGDMineta1","timeAltGDMineta1",...
+                               "SDAltGDMin","timeAltGDMin",...
+                               "SDAltMinParfor","timeAltMinParfor",...
+                               "SDAltMinCntrl","timeAltMinCntrl",...
+                               "SDAltGDMinCntrl","timeAltGDMinCntrl",...
+                               "SDProjGD","timeProjGD",...
+                               "SDAltMinPrvt","timeAltMinPrvt",...
+                               "SDAltGD","timeAltGD",...
+                               "n","p","q","r","mc","T",...
+                               "numWrkrs");
+    end
     mc
 end
 toc
+%------Optional for running with partially loaded data%-------------------
+MC = mc;
+SDAltMinParfor  = SDAltMinParfor(1:MC,:);
+timeAltMinParfor = timeAltMinParfor(1:MC,:);
+
+SDAltMinCntrl = SDAltMinCntrl(1:MC,:);
+timeAltMinCntrl = timeAltMinCntrl(1:MC,:);
+
+SDAltMinPrvt = SDAltMinPrvt(1:MC,:);
+timeAltMinPrvt = timeAltMinPrvt(1:MC,:);
+
+SDAltGD = SDAltGD(1:MC,:);
+timeAltGD = timeAltGD(1:MC,:);
+
+SDProjGD = SDProjGD(1:MC,:);
+timeProjGD = timeProjGD(1:MC,:);
+
+SDAltGDMin = SDAltGDMin(1:MC,:);
+timeAltGDMin = timeAltGDMin(1:MC,:);
+
+SDAltGDMineta1 = SDAltGDMineta1(1:MC,:);
+timeAltGDMineta1 = timeAltGDMineta1(1:MC,:);
+
+SDAltGDMinCntrl = SDAltGDMinCntrl(1:MC,:);
+timeAltGDMinCntrl = timeAltGDMinCntrl(1:MC,:);
+%---------------------------------------------
 % 1
 SDAltMinParfor = sum(SDAltMinParfor,1)/MC;
 timeAltMinParfor = sum(timeAltMinParfor,1)/MC;
@@ -140,9 +153,9 @@ timeAltGDMineta1 = sum(timeAltGDMineta1,1)/MC;
 SDAltGDMinCntrl = sum(SDAltGDMinCntrl,1)/MC;
 timeAltGDMinCntrl = sum(timeAltGDMinCntrl,1)/MC;
 % --- Plot Subspace Distance against Iteration Figure
-plotErrvsIter(space, T, n, q, r, p,...
-               SDAltMinCntrl, SDAltMinParfor, SDAltMinPrvt, SDAltGD,...
-               SDProjGD, SDAltGDMin, SDAltGDMineta1)
+%plotErrvsIter(space, T, n, q, r, p,...
+%               SDAltMinCntrl, SDAltMinParfor, SDAltMinPrvt, SDAltGD,...
+%               SDProjGD, SDAltGDMin, SDAltGDMineta1)
 %--- Plot Subspace Distance against Time Figure
 idx1 = find(SDAltMinParfor < 10^-14,1);
 tidx1 = timeAltMinParfor(idx1);
@@ -169,42 +182,45 @@ idx8 = find(SDAltGDMinCntrl < 10^-14,1);
 tidx8 =  timeAltGDMinCntrl(idx8);
 
 timeSD = max([tidx1,tidx2,tidx3,tidx4,tidx5,tidx6,tidx7,tidx8]);
+%timeSD = max([tidx1,tidx2,tidx4,tidx6,tidx7,tidx8]);
+%timeSD = max([tidx1,tidx7]);
+
 
 figure
 semilogy(timeAltMinCntrl(timeAltMinCntrl <= timeSD),...
-        SDAltMinCntrl(timeAltMinCntrl <= timeSD),...
-        'DisplayName', ...
-        'AltMin(Cntrl.)', ...
-        'LineWidth',1.45,'Marker','o','MarkerSize',5)
+       SDAltMinCntrl(timeAltMinCntrl <= timeSD),...
+       'DisplayName', ...
+       'AltMin(Cntrl.)', ...
+       'LineWidth',1.45,'Marker','o','MarkerSize',5)
 hold on
 semilogy(timeAltMinParfor(timeAltMinParfor <= timeSD ),...
          SDAltMinParfor(timeAltMinParfor <= timeSD),'DisplayName', ...
         'AltMin(Fed./NotPrvt.)', ...
         'LineWidth',1.45,'Marker','o','MarkerSize',5)
 semilogy(timeAltMinPrvt(timeAltMinPrvt <= timeSD ),...
-         SDAltMinPrvt(timeAltMinPrvt <= timeSD),'DisplayName', ...
-        'AltMin(Fed./Prvt.)', ...
-        'LineWidth',1.45,'Marker','o','MarkerSize',5)
+        SDAltMinPrvt(timeAltMinPrvt <= timeSD),'DisplayName', ...
+       'AltMin(Fed./Prvt.)', ...
+       'LineWidth',1.45,'Marker','o','MarkerSize',5)
 semilogy(timeAltGD(timeAltGD <= timeSD ),...
-         SDAltGD(timeAltGD <= timeSD),'DisplayName', ...
-        'AltGD', ...
-        'LineWidth',1.45,'Marker','x','MarkerSize',5)
+        SDAltGD(timeAltGD <= timeSD),'DisplayName', ...
+       'AltGD', ...
+       'LineWidth',1.45,'Marker','x','MarkerSize',5)
 semilogy(timeProjGD(timeProjGD <= timeSD ),...
-         SDProjGD(timeProjGD <= timeSD),'DisplayName', ...
-        'ProjGD', ...
-        'LineWidth',1.45,'Marker','+','MarkerSize',5)
+        SDProjGD(timeProjGD <= timeSD),'DisplayName', ...
+       'ProjGD', ...
+       'LineWidth',1.45,'Marker','+','MarkerSize',5)
 semilogy(timeAltGDMin(timeAltGDMin <= timeSD ),...
-         SDAltGDMin(timeAltGDMin <= timeSD ),'DisplayName', ...
-        'AltGDMin(Fed.) $\eta = 3/4$', ...
-        'LineWidth',1.45,'Marker','square','MarkerSize',5)
+        SDAltGDMin(timeAltGDMin <= timeSD ),'DisplayName', ...
+       'AltGDMin(Fed.) $\eta = 3/4$', ...
+       'LineWidth',1.45,'Marker','square','MarkerSize',5)
 semilogy(timeAltGDMineta1(timeAltGDMineta1 <= timeSD ),...
          SDAltGDMineta1(timeAltGDMineta1 <= timeSD ),'DisplayName', ...
         'AltGDMin(Fed.) $\eta = 1.0$', ...
         'LineWidth',1.45,'Marker','square','MarkerSize',5)
 semilogy(timeAltGDMinCntrl(timeAltGDMinCntrl <= timeSD ),...
-         SDAltGDMinCntrl(timeAltGDMinCntrl <= timeSD ),'DisplayName', ...
-        'AltGDMin(Cntrl.)', ...
-        'LineWidth',1.45,'Marker','square','MarkerSize',5)
+        SDAltGDMinCntrl(timeAltGDMinCntrl <= timeSD ),'DisplayName', ...
+       'AltGDMin(Cntrl.)', ...
+       'LineWidth',1.45,'Marker','square','MarkerSize',5)
 grid on
 
 legend('Interpreter','Latex','Fontsize',9)
@@ -214,13 +230,143 @@ title("n = " + n + ", q = " + q +...
       ", r = " + r + ", p = " + p + '.',...
        'Interpreter', 'Latex', 'FontSize',14)
 cores = feature('numCores');
-stringTitle = ['Time_',num2str(wrkrs),'Max',num2str(cores),'_eta_',num2str(eta_c),'_MC_',num2str(MC),...
+stringTitle = ['All_wrkrs_',num2str(numWrkrs),'Max',num2str(cores),'_MC_',num2str(MC),...
                   '_n_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
                    'T_',num2str(T),'_id',num2str(randi(1e3,1))];
 
 savefig([stringTitle,'.fig']);
+% %-------------------------------------------------------------------------------------
+% MC = mc;
+% SDAltMinParfor  = SDAltMinParfor(1:MC,:);
+% timeAltMinParfor = timeAltMinParfor(1:MC,:);
+% 
+% SDAltMinCntrl = SDAltMinCntrl(1:MC,:);
+% timeAltMinCntrl = timeAltMinCntrl(1:MC,:);
+% 
+% SDAltMinPrvt = SDAltMinPrvt(1:MC,:);
+% timeAltMinPrvt = timeAltMinPrvt(1:MC,:);
+% 
+% SDAltGD = SDAltGD(1:MC,:);
+% timeAltGD = timeAltGD(1:MC,:);
+% 
+% SDProjGD = SDProjGD(1:MC,:);
+% timeProjGD = timeProjGD(1:MC,:);
+% 
+% SDAltGDMin = SDAltGDMin(1:MC,:);
+% timeAltGDMin = timeAltGDMin(1:MC,:);
+% 
+% SDAltGDMineta1 = SDAltGDMineta1(1:MC,:);
+% timeAltGDMineta1 = timeAltGDMineta1(1:MC,:);
+% 
+% SDAltGDMinCntrl = SDAltGDMinCntrl(1:MC,:);
+% timeAltGDMinCntrl = timeAltGDMinCntrl(1:MC,:);
+% 
+% % 1
+% SDAltMinParfor = sum(SDAltMinParfor,1)/MC;
+% timeAltMinParfor = sum(timeAltMinParfor,1)/MC;
+% % 2
+% SDAltMinCntrl = sum(SDAltMinCntrl,1)/MC;
+% timeAltMinCntrl = sum(timeAltMinCntrl,1)/MC;
+% % 3
+% SDAltMinPrvt = sum(SDAltMinPrvt,1)/MC;
+% timeAltMinPrvt = sum(timeAltMinPrvt,1)/MC;
+% % 4
+% SDAltGD = sum(SDAltGD,1)/MC;
+% timeAltGD = sum(timeAltGD,1)/MC;
+% % 5
+% SDProjGD = sum(SDProjGD,1)/MC;
+% timeProjGD = sum(timeProjGD,1)/MC;
+% % 6
+% SDAltGDMin = sum(SDAltGDMin,1)/MC;
+% timeAltGDMin = sum(timeAltGDMin,1)/MC;
+% % 7
+% SDAltGDMineta1 = sum(SDAltGDMineta1,1)/MC;
+% timeAltGDMineta1 = sum(timeAltGDMineta1,1)/MC;
+% % 8
+% SDAltGDMinCntrl = sum(SDAltGDMinCntrl,1)/MC;
+% timeAltGDMinCntrl = sum(timeAltGDMinCntrl,1)/MC;
+% 
+% %--- Plot Subspace Distance against Time Figure
+% idx1 = find(SDAltMinParfor < 10^-14,1);
+% tidx1 = timeAltMinParfor(idx1);
+% 
+% idx2 = find(SDAltMinCntrl < 10^-14,1);
+% tidx2 = timeAltMinCntrl(idx2);
+% 
+% idx3 = find(SDAltMinPrvt < 10^-14,1);
+% tidx3 = timeAltMinPrvt(idx3);
+% 
+% idx4 =  find(SDAltGD < 10^-14,1);
+% tidx4 = timeAltGD(idx4);
+% 
+% idx5 = find(SDProjGD < 10^-14,1);
+% tidx5 =  timeProjGD(idx5);
+% 
+% idx6 = find(SDAltGDMin < 10^-14,1);
+% tidx6 =  timeAltGDMin(idx6);
+% 
+% idx7 = find(SDAltGDMineta1 < 10^-14,1);
+% tidx7 =  timeAltGDMineta1(idx7);
+% 
+% idx8 = find(SDAltGDMinCntrl < 10^-14,1);
+% tidx8 =  timeAltGDMinCntrl(idx8);
+% 
+% 
+% timeSD = max([tidx1,tidx7]);
+% 
+% 
+% figure
+% semilogy(timeAltMinCntrl(timeAltMinCntrl <= timeSD),...
+%        SDAltMinCntrl(timeAltMinCntrl <= timeSD),...
+%        'DisplayName', ...
+%        'AltMin(Cntrl.)', ...
+%        'LineWidth',1.45,'Marker','o','MarkerSize',5)
+% hold on
+% semilogy(timeAltMinParfor(timeAltMinParfor <= timeSD ),...
+%          SDAltMinParfor(timeAltMinParfor <= timeSD),'DisplayName', ...
+%         'AltMin(Fed./NotPrvt.)', ...
+%         'LineWidth',1.45,'Marker','o','MarkerSize',5)
+% semilogy(timeAltMinPrvt(timeAltMinPrvt <= timeSD ),...
+%         SDAltMinPrvt(timeAltMinPrvt <= timeSD),'DisplayName', ...
+%        'AltMin(Fed./Prvt.)', ...
+%        'LineWidth',1.45,'Marker','o','MarkerSize',5)
+% semilogy(timeAltGD(timeAltGD <= timeSD ),...
+%         SDAltGD(timeAltGD <= timeSD),'DisplayName', ...
+%        'AltGD', ...
+%        'LineWidth',1.45,'Marker','x','MarkerSize',5)
+% semilogy(timeProjGD(timeProjGD <= timeSD ),...
+%         SDProjGD(timeProjGD <= timeSD),'DisplayName', ...
+%        'ProjGD', ...
+%        'LineWidth',1.45,'Marker','+','MarkerSize',5)
+% semilogy(timeAltGDMin(timeAltGDMin <= timeSD ),...
+%         SDAltGDMin(timeAltGDMin <= timeSD ),'DisplayName', ...
+%        'AltGDMin(Fed.) $\eta = 3/4$', ...
+%        'LineWidth',1.45,'Marker','square','MarkerSize',5)
+% semilogy(timeAltGDMineta1(timeAltGDMineta1 <= timeSD ),...
+%          SDAltGDMineta1(timeAltGDMineta1 <= timeSD ),'DisplayName', ...
+%         'AltGDMin(Fed.) $\eta = 1.0$', ...
+%         'LineWidth',1.45,'Marker','square','MarkerSize',5)
+% semilogy(timeAltGDMinCntrl(timeAltGDMinCntrl <= timeSD ),...
+%         SDAltGDMinCntrl(timeAltGDMinCntrl <= timeSD ),'DisplayName', ...
+%        'AltGDMin(Cntrl.)', ...
+%        'LineWidth',1.45,'Marker','square','MarkerSize',5)
+% grid on
+% 
+% legend('Interpreter','Latex','Fontsize',9)
+% ylabel('$\mathrm{SD}(\mathbf{U}^{(t)}, \mathbf{U}^*)$','Interpreter','Latex','Fontsize',15)
+% xlabel('Time/seconds',FontSize=11)
+% title("n = " + n + ", q = " + q +...
+%       ", r = " + r + ", p = " + p + '.',...
+%        'Interpreter', 'Latex', 'FontSize',14)
+% cores = feature('numCores');
+% stringTitle = ['CloseIn_All_wrkrs_',num2str(numWrkrs),'Max',num2str(cores),'_MC_',num2str(MC),...
+%                   '_n_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+%                    'T_',num2str(T),'_id',num2str(randi(1e3,1))];
+% 
+% savefig([stringTitle,'.fig']);
+
 % save pdf figure
-exportgraphics(gcf,[stringTitle,'.pdf'])
+%exportgraphics(gcf,[stringTitle,'.pdf'])
 
 
 %--- Function routines for Algorithms
@@ -258,8 +404,8 @@ function [SDVals,timeArr] =  altGDMinCntrl(Xzeros,Xvec, r,p,...
 end
 
 function [SDVals,timeArr] = altGDMin(r,eta_c,...
-                                            Ustr,Xzeros, T,p, ...
-                                            rowIdx,Xcol)
+                                        Ustr,Xzeros, T,p, ...
+                                        rowIdx,Xcol,numWrkrs)
 
     % 4 is the number of nodes
     
@@ -281,22 +427,25 @@ function [SDVals,timeArr] = altGDMin(r,eta_c,...
     SDVals = zeros(T+1,1);
     SDVals(1) = norm((eye(n) - U*U')*Ustr ,'fro');
     timeArr = zeros(T+1,1);
-    Xcol_ = cell(4,q/4);
-    rowsJ = reshape(rowIdx,[q/4,4]);
+    Xcol_ = cell(numWrkrs,q/numWrkrs);
+    rowsJ = reshape(rowIdx,[q/numWrkrs,numWrkrs]);
     rowsJ = rowsJ';
-    for j = 1 : 4
-        offset = (j-1)*q/4;
-        for k = 1 : q/4
+    for j = 1 : numWrkrs
+        offset = (j-1)*q/numWrkrs;
+        for k = 1 : q/numWrkrs
             Xcol_{j,k} = Xcol{offset+k};
         end
     end
-    grad_ = zeros(n,r,4);  
+    grad_ = zeros(n,r,numWrkrs);  
     for i = 1 : T
         tStart = tic;
         %start =  ticBytes(gcp);
-        parfor j = 1 : 4
-            tmp = zeros(r,q/4);
+        parfor j = 1 : numWrkrs
+            tmp = zeros(r,q/numWrkrs);
             %M = zeros(n,q/4); 
+            %diff = zeros(n*q,1);
+            %rows = zeros(n*q,1);
+            %cols = zeros(n*q,1);
             diff = [];
             rows = [];
             cols = [];
@@ -306,7 +455,7 @@ function [SDVals,timeArr] = altGDMin(r,eta_c,...
                                 % array of size 4 x 1,
             XcolJ = Xcol_(j,:);
             strt = 0;
-            for k = 1 : q/4
+            for k = 1 : q/numWrkrs
                rowIdx_jk = rowIdxj{k};
                numRows = length(rowIdx_jk);
                tmp(:,k) = U(rowIdx_jk,:)\XcolJ{k}
@@ -315,9 +464,12 @@ function [SDVals,timeArr] = altGDMin(r,eta_c,...
                cols(strt + 1 : strt + numRows) = k;
                strt = strt + numRows;
             end
+            diff = diff(1:strt);
+            rows = rows(1:strt);
+            cols = cols(1:strt);
             %linIdx = sub2ind([n,q/4],rows,cols);
             %M(linIdx) = diff;
-            M = sparse(rows,cols,diff,n,q/4);
+            M = sparse(rows,cols,diff,n,q/numWrkrs);
             grad_(:,:,j) = M*tmp'; 
         end
         %tocBytes(gcp,start)
@@ -330,6 +482,7 @@ function [SDVals,timeArr] = altGDMin(r,eta_c,...
         SDVals(i + 1) = norm( (eye(n) - U*U')*Ustr ,'fro' );
     end        
 end
+
 function [SDVals, timeArr] = altMinParfor(Xzeros,r,p, ...
                                     Ustr,T, ...
                                     rowIdx,Xcol,colIdx,Xrow)
