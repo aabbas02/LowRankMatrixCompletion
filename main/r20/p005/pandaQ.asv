@@ -1,6 +1,0 @@
-y = 0;
-n = 1e3;
-for i = 2 : n
-   y = yold + 3;
-end
-log2(y)
