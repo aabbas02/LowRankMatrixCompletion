@@ -19,12 +19,4 @@ function [U,S]  = fedSvd(Xzeros,r,Tsvd,numWrkrs)
             M = orth(M);
         end
     end
-    %R = diag(R);
-    %R = sort(R,"descend");
-    %R = sqrt(R);
-    %R = diag(R);
-    %[Ustr,S,~] = svds(Xzeros,r);
-    %sprintf('Error in left-singular vectors SD_F =  %e \n', norm((eye(n) - U*U')*Ustr ,'fro' ))
-    %sprintf('Error in the singular vlaues = %e \n', norm(diag(sqrt(R)) - diag(S),'fro'))
-    %norm(U - Ustr)
 end
