@@ -1,4 +1,4 @@
-function [SDVals,timeArr] = altGDMin_T(r,eta_c,...
+function [SDVals,timeArr,timeQRArr] = altGDMin_T(r,eta_c,...
                                      Ustr,Xzeros, T,p, ...
                                      rowIdx,Xcol,numWrkrs,Tsvd)
 
@@ -32,6 +32,7 @@ function [SDVals,timeArr] = altGDMin_T(r,eta_c,...
     SDVals = zeros(T+1,1);
     SDVals(1) = norm((eye(n) - U*U')*Ustr ,'fro');
     timeArr = zeros(T+1,1);
+    timeQRArr = zeros(T+1,1);
     Xcol_ = cell(numWrkrs,q/numWrkrs);
     rowsJ = reshape(rowIdx,[q/numWrkrs,numWrkrs]);
     rowsJ = rowsJ';
@@ -81,8 +82,11 @@ function [SDVals,timeArr] = altGDMin_T(r,eta_c,...
         grad = sum(grad_,3);
         U = U - eta*grad;
         % Project U by using SVD or QR
+        tStartQR = tic;
         [U,~] = qr(U,'econ');
+        tQR = toc(tStartQR);
         tEnd = toc(tStart);
+        timeQRArr(i + 1) = timeQRArr(i) + tQR;
         timeArr(i + 1) = timeArr(i) + tEnd;
         SDVals(i + 1) = norm( (eye(n) - U*U')*Ustr ,'fro' );
         tStart = tic;
