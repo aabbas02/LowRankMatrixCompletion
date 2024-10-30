@@ -1,7 +1,8 @@
 import numpy as np
 import time
 from dask.distributed import Client, LocalCluster
-from functions4Algos import altMinGD, factGD, altGDMinFedDaskScttrSparseNew, altMinFedDaskScttrRow
+from altMin import altMinGD, altMinFullyDist, altMinFedCol
+from functions4Algos import factGD, altGDMinFedDaskScttrSparseNew
 from utils import plotErrAgnstTime, plotTimeAgnstWrkrs, getDataPtr, fedSVD
 import random
 import os
@@ -23,11 +24,18 @@ if __name__ == '__main__':
     lim = 1e-13
     T_in = 10
     #
-    timeAltMinFedRow = -1*np.ones( (MC,len(numWrkrs_)) )
-    timeFedVAltMinRow = -1*np.ones((MC,len(numWrkrs_)))
-    timeFedUAltMinRow = -1*np.ones((MC,len(numWrkrs_)))
+    #timeAltMinFedRow = -1*np.ones( (MC,len(numWrkrs_)) )
+    #timeFedVAltMinRow = -1*np.ones((MC,len(numWrkrs_)))
+    #timeFedUAltMinRow = -1*np.ones((MC,len(numWrkrs_)))
+    #timeAltMin_ = -1*np.ones((len(numWrkrs_),T))
+    #SDAltMin_ = -1*np.ones((len(numWrkrs_),T))
+    #---
+    timeAltMinFedCol = -1*np.ones( (MC,len(numWrkrs_)) )
+    #timeFedVAltMinRow = -1*np.ones((MC,len(numWrkrs_)))
+    #timeFedUAltMinRow = -1*np.ones((MC,len(numWrkrs_)))
     timeAltMin_ = -1*np.ones((len(numWrkrs_),T))
     SDAltMin_ = -1*np.ones((len(numWrkrs_),T))
+
     #---
     timeAltGDMinFedSparse = -1*np.ones( (MC,len(numWrkrs_)) )
     timeCntrAltGDMinSparse = -1*np.ones( (MC,len(numWrkrs_)))
@@ -86,16 +94,23 @@ if __name__ == '__main__':
                 S = S/p
             b = time.time()
             print(f"Time taken indexing and Init SVD = {b - a:.3f} seconds. MC = {mc}.")
-            [SD_,tme_, tmeC_, tmeF_,tme,tmeFU,tmeFV,idx] = altMinFedDaskScttrRow(r,q, Ustr, T,dataPtrs
-                                                                                  , numWrkrs,client, lim, U0_init)
+            #[SD_,tme_, tmeC_, tmeF_,tme,tmeFU,tmeFV,idx] = altMinFullyDist(r,q, Ustr, T,dataPtrs
+            #                                                                      , numWrkrs,client, lim, U0_init)
 
-            timeAltMinFedRow[mc,i] = tme
-            timeFedUAltMinRow[mc,i] = tmeFU
-            timeFedVAltMinRow[mc,i] = tmeFV
+            #timeAltMinFedRow[mc,i] = tme
+            #timeFedUAltMinRow[mc,i] = tmeFU
+            #timeFedVAltMinRow[mc,i] = tmeFV
+            #timeAltMinMC[mc,:idx] = tme_
+            #SDAltMinMC[mc,:idx] = SD_
+            #print(f"altMinFed-FullyDist. time = {tme:.2f}s, timeFed-U = {tmeFU:.2f}s, timeFed-V = {tmeFV:.2f}s,  SD = {SD_[-1]:.2E},   Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
+
+            #
+
+            [SD_,tme_,tme,idx] = altMinFedCol(r, q, Ustr, T, dataPtrs, numWrkrs,client, lim, U0_init)
+            timeAltMinFedCol[mc,i] = tme 
             timeAltMinMC[mc,:idx] = tme_
             SDAltMinMC[mc,:idx] = SD_
-            print(f"altMinFed-FullyDist. time = {tme:.2f}s, timeFed-U = {tmeFU:.2f}s, timeFed-V = {tmeFV:.2f}s,  SD = {SD_[-1]:.2E},   Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
-
+            print(f"altMinFedCol. time = {tme:.2f}s,   SD = {SD_[-1]:.2E},   Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
             #
             [SD_,tme_,tmeC_,tmeF_,tme,tmeC,tmeF,idx] = altGDMinFedDaskScttrSparseNew(r, eta_c, Ustr,  2*T, p,
                                                                                  dataPtrs,numWrkrs, client, lim, U0_init,S)
@@ -130,16 +145,16 @@ if __name__ == '__main__':
             #
             client.restart()
             #Save variables
-            varDictSmall = {"n":n,"q":q,"r":r,"p":p,"MC":mc,"ID":ID,
-            "timeFactGD":timeFactGD[:mc,i],
-            "timeAltGDMinFedSparse":timeAltGDMinFedSparse[:mc,i],
-            "timeAltMinFedRow":timeAltMinFedRow[:mc,i],
-            "timeAltMinGD":timeAltMinGD[:mc,i],
-            "numWrkrs":numWrkrs}
-            scipy.io.savemat(f"data/n_{n}_q_{q}_r_{r}_p_{p}_numWrks_{numWrkrs}_ID_{ID}.mat", varDictSmall)
+            #varDictSmall = {"n":n,"q":q,"r":r,"p":p,"MC":mc,"ID":ID,
+            #"timeFactGD":timeFactGD[:mc,i],
+            #"timeAltGDMinFedSparse":timeAltGDMinFedSparse[:mc,i],
+            #"timeAltMinFedRow":timeAltMinFedCol[:mc,i],
+            #"timeAltMinGD":timeAltMinGD[:mc,i],
+            #"numWrkrs":numWrkrs}
+            #scipy.io.savemat(f"data/n_{n}_q_{q}_r_{r}_p_{p}_numWrks_{numWrkrs}_ID_{ID}.mat", varDictSmall)
             # Store data (serialize)
-            with open(f"data/n_{n}_q_{q}_r_{r}_p_{p}_numWrks_{numWrkrs}_ID_{ID}.pickle", 'wb') as handle:
-                pickle.dump(varDictSmall, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            #with open(f"data/n_{n}_q_{q}_r_{r}_p_{p}_numWrks_{numWrkrs}_ID_{ID}.pickle", 'wb') as handle:
+                #pickle.dump(varDictSmall, handle, protocol=pickle.HIGHEST_PROTOCOL)
             print(f"--------------------------------------------------------")
         cluster.close()
         client.close()
@@ -179,17 +194,17 @@ if __name__ == '__main__':
         #---
         print(f"timeAltGDMinFedSparse ={np.sum(timeAltGDMinFedSparse,axis=0)/MC}", flush = True)
         #---
-        print(f"timeAltMinFedRow = {np.sum(timeAltMinFedRow, axis=0)/MC}", flush = True)
+        print(f"timeAltMinFedCol = {np.sum(timeAltMinFedCol, axis=0)/MC}", flush = True)
         #---
         print(f"timeAltMinGD ={np.sum(timeAltMinGD,axis=0)/MC}", flush = True)
         #---
     #---------------------------------------------------------------
     timeFactGD = np.sum(timeFactGD,axis=0)/MC
     timeAltGDMinFedSparse = np.sum(timeAltGDMinFedSparse,axis=0)/MC
-    timeAltMinFedRow = np.sum(timeAltMinFedRow, axis=0)/MC
+    timeAltMinFedCol = np.sum(timeAltMinFedCol, axis=0)/MC
     timeAltMinGD = np.sum(timeAltMinGD,axis=0)/MC
     plotTimeAgnstWrkrs(np.array(numWrkrs_),  n,q,r,p,ID,lim,MC,
-                    timeAltMinFed = timeAltMinFedRow, 
+                    timeAltMinFed = timeAltMinFedCol, 
                     timeAltGDMinFedSparse = timeAltGDMinFedSparse,
                     timeAltMinGD = timeAltMinGD,
                     timeFactGD = timeFactGD, T_in  = T_in)
@@ -200,6 +215,6 @@ if __name__ == '__main__':
                 "timeFactGD_":timeFactGD_,"SDFactGD_":SDFactGD_,
                 "timeFactGD":timeFactGD,
                 "timeAltGDMinFedSparse":timeAltGDMinFedSparse,
-                "timeAltMinFedRow":timeAltMinFedRow,
+                "timeAltMinFedRow":timeAltMinFedCol,
                 "timeAltMinGD":timeAltMinGD,
                 "numWrkrs_":numWrkrs_}
