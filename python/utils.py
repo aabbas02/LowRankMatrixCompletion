@@ -17,7 +17,7 @@ def plotTimeAgnstWrkrs(numWrkrs_,  n,q,r,p,ID,lim,MC, timeFactGD = -1*np.ones(10
     L = numWrkrs_.shape[0]
     plt.plot(numWrkrs_[timeFactGD[:L] > 0], timeFactGD[timeFactGD > 0], label='FactGD', marker="o")
     plt.plot(numWrkrs_[timeAltGDMinFedSparse[:L] > 0], timeAltGDMinFedSparse[timeAltGDMinFedSparse > 0], label = 'AltGDMin', marker="^")
-    plt.plot(numWrkrs_[timeAltMinFed[:L] > 0], timeAltMinFed[timeAltMinFed > 0], label='AltMin(Fed.)', marker="s")
+    plt.plot(numWrkrs_[timeAltMinFed[:L] > 0], timeAltMinFed[timeAltMinFed > 0], label='AltMin(Fed. NotPrvt.)', marker="s")
     plt.plot(numWrkrs_[timeAltMinGD[:L] > 0], timeAltMinGD[timeAltMinGD > 0], label='AltMin(GD. Prvt.)', marker="*")
     plt.xlabel('Number of workers')
     plt.ylabel(r"Time taken for $SD_F(\hat \mathbf{U},\mathbf{U}^*) \leq$" f"{lim:.2E} / seconds")

@@ -12,14 +12,14 @@ from scipy.sparse import csr_matrix
 import scipy
 import pickle, coiled
 if __name__ == '__main__':  
-    r = 2
-    n = 500
-    q = 1000
+    r = 20
+    n = 5000
+    q = 10000
     eta_c = 1.0
-    p = 0.1
+    p = 0.05
     ID  = np.random.randint(low=0, high=999)
-    numWrkrs_ = [2,4]
-    MC = 5
+    numWrkrs_ = [5]
+    MC = 2
     T = 1001
     lim = 1e-13
     T_in = 10
@@ -60,7 +60,6 @@ if __name__ == '__main__':
         #cluster = coiled.Cluster(
         #n_workers=numWrkrs,
         #region="us-east-2",
-        #use_scheduler_public_ip=False,
         #backend_options = {"zone_name": "us-east-2b"},
         #spot_policy="on-demand",
         #scheduler_vm_types="c7gn.4xlarge",
@@ -94,6 +93,16 @@ if __name__ == '__main__':
                 S = S/p
             b = time.time()
             print(f"Time taken indexing and Init SVD = {b - a:.3f} seconds. MC = {mc}.")
+            #  run code once to make sure that the code is distributed to the workers 
+            #  distributing the code to ther workers incurs extra time, which makes the timing reported by th first MC run inaccruate 
+            if mc == 0: 
+                Tlcl = 2
+                limLcl = 1
+                [a,b,c,d] = altMinFedCol(r, q, Ustr, Tlcl, dataPtrs, numWrkrs,client, limLcl, U0_init)
+                [a,b,c,d,e,f,g,h] = altGDMinFedDaskScttrSparseNew(r, eta_c, Ustr,  2*Tlcl, p, dataPtrs,numWrkrs, client, limLcl, U0_init,S)
+                [a,b,c,d,e,f,g,h] = factGD(q,r,  Ustr, Tlcl, p, dataPtrs,numWrkrs, client, limLcl, U0_init,np.diag(S),Vptr_)
+                [a,b,c,d,e,f,g,h] = altMinGD(r, eta_c, Ustr,  2*Tlcl, p,dataPtrs, numWrkrs, client, limLcl, U0_init, S, T_in)
+
             #[SD_,tme_, tmeC_, tmeF_,tme,tmeFU,tmeFV,idx] = altMinFullyDist(r,q, Ustr, T,dataPtrs
             #                                                                      , numWrkrs,client, lim, U0_init)
 
@@ -104,43 +113,44 @@ if __name__ == '__main__':
             #SDAltMinMC[mc,:idx] = SD_
             #print(f"altMinFed-FullyDist. time = {tme:.2f}s, timeFed-U = {tmeFU:.2f}s, timeFed-V = {tmeFV:.2f}s,  SD = {SD_[-1]:.2E},   Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
 
-            #
 
+            #client.restart()
             [SD_,tme_,tme,idx] = altMinFedCol(r, q, Ustr, T, dataPtrs, numWrkrs,client, lim, U0_init)
+            print(SD_)
             timeAltMinFedCol[mc,i] = tme 
             timeAltMinMC[mc,:idx] = tme_
             SDAltMinMC[mc,:idx] = SD_
             print(f"altMinFedCol. time = {tme:.2f}s,   SD = {SD_[-1]:.2E},   Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
             #
-            [SD_,tme_,tmeC_,tmeF_,tme,tmeC,tmeF,idx] = altGDMinFedDaskScttrSparseNew(r, eta_c, Ustr,  2*T, p,
-                                                                                 dataPtrs,numWrkrs, client, lim, U0_init,S)
-            timeAltGDMinFedSparse[mc,i] = tme
-            timeCntrAltGDMinSparse[mc,i] = tmeC
-            timeFedAltGDMinSparse[mc,i] = tmeF
-            timeAltGDMinMC[mc,:idx] = tme_
-            SDAltGDMinMC[mc,:idx] = SD_
-            print(f"altGDMinSparse. time = {tme:.2f}s,  timeCenter = {tmeC:.2f}s,  timeFed = {tmeF:.2f}s,  SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
-            print(f"-----")
+            #[SD_,tme_,tmeC_,tmeF_,tme,tmeC,tmeF,idx] = altGDMinFedDaskScttrSparseNew(r, eta_c, Ustr,  2*T, p,
+            #                                                                     dataPtrs,numWrkrs, client, lim, U0_init,S)
+            #timeAltGDMinFedSparse[mc,i] = tme
+            #timeCntrAltGDMinSparse[mc,i] = tmeC
+            #timeFedAltGDMinSparse[mc,i] = tmeF
+            #timeAltGDMinMC[mc,:idx] = tme_
+            #SDAltGDMinMC[mc,:idx] = SD_
+            #print(f"altGDMinSparse. time = {tme:.2f}s,  timeCenter = {tmeC:.2f}s,  timeFed = {tmeF:.2f}s,  SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
+            #print(f"-----")
             #
-            [SD_,tme_,tmeC_,tmeF_,tme,tmeC,tmeF,idx] = factGD(q,r,  Ustr, T, p, dataPtrs,
-                                                            numWrkrs, client, lim, U0_init,np.diag(S),Vptr_)
-            timeFactGD[mc,i] = tme
-            timeCntrlFactGD[mc,i] = tmeC
-            timeFedFactGD[mc,i] = tmeF
-            timeFactGDMC[mc,:idx] = tme_
-            SDFactGDMC[mc,:idx] = SD_
-            print(f"factGD. time = {tme:.2f}s,  timeCenter = {tmeC:.2f}s, timeFed = {tmeF:.2f}s,  SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
-            print(f"-----")
+            #[SD_,tme_,tmeC_,tmeF_,tme,tmeC,tmeF,idx] = factGD(q,r,  Ustr, T, p, dataPtrs,
+            #                                                numWrkrs, client, lim, U0_init,np.diag(S),Vptr_)
+            #timeFactGD[mc,i] = tme
+            #timeCntrlFactGD[mc,i] = tmeC
+            #timeFedFactGD[mc,i] = tmeF
+            #timeFactGDMC[mc,:idx] = tme_
+            #SDFactGDMC[mc,:idx] = SD_
+            #print(f"factGD. time = {tme:.2f}s,  timeCenter = {tmeC:.2f}s, timeFed = {tmeF:.2f}s,  SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
+            #print(f"-----")
             #
-            [SD_,tme_,tmeFU_,tmeFV_,tme,tmeFU,tmeFV,idx] = altMinGD(r, eta_c, Ustr,  2*T, p,
-                                                                     dataPtrs, numWrkrs, client, lim, U0_init, S, T_in)
-            timeAltMinGD[mc,i] = tme
-            timeFedUAltMinGD[mc,i] = tmeFU
-            timeFedVAltMinGD[mc,i] = tmeFV
-            timeAltMinGDMC[mc,:idx] = tme_
-            SDAltMinGDMC[mc,:idx] = SD_
-            print(f"altMinGD. time = {tme:.2f}s,  timeFedU = {tmeFU:.2f}s, timeFedV = {tmeFV:.2f}s, SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs},n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
-            print(f"-----")
+            #[SD_,tme_,tmeFU_,tmeFV_,tme,tmeFU,tmeFV,idx] = altMinGD(r, eta_c, Ustr,  2*T, p,
+            #                                                         dataPtrs, numWrkrs, client, lim, U0_init, S, T_in)
+            #timeAltMinGD[mc,i] = tme
+            #timeFedUAltMinGD[mc,i] = tmeFU
+            #timeFedVAltMinGD[mc,i] = tmeFV
+            #timeAltMinGDMC[mc,:idx] = tme_
+            #SDAltMinGDMC[mc,:idx] = SD_
+            #print(f"altMinGD. time = {tme:.2f}s,  timeFedU = {tmeFU:.2f}s, timeFedV = {tmeFV:.2f}s, SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs},n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
+            #print(f"-----")
             #
             #
             client.restart()
