@@ -12,13 +12,13 @@ from scipy.sparse import csr_matrix
 import scipy
 import pickle, coiled
 if __name__ == '__main__':  
-    r = 20
-    n = 5000
-    q = 10000
+    r = 2
+    n = 500
+    q = 1000
     eta_c = 1.0
-    p = 0.05
+    p = 0.1
     ID  = np.random.randint(low=0, high=999)
-    numWrkrs_ = [5]
+    numWrkrs_ = [5,10]
     MC = 2
     T = 1001
     lim = 1e-13
@@ -113,34 +113,34 @@ if __name__ == '__main__':
             #SDAltMinMC[mc,:idx] = SD_
             #print(f"altMinFed-FullyDist. time = {tme:.2f}s, timeFed-U = {tmeFU:.2f}s, timeFed-V = {tmeFV:.2f}s,  SD = {SD_[-1]:.2E},   Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
 
-
             #client.restart()
             [SD_,tme_,tme,idx] = altMinFedCol(r, q, Ustr, T, dataPtrs, numWrkrs,client, lim, U0_init)
-            print(SD_)
+            #print(SD_)
             timeAltMinFedCol[mc,i] = tme 
             timeAltMinMC[mc,:idx] = tme_
             SDAltMinMC[mc,:idx] = SD_
             print(f"altMinFedCol. time = {tme:.2f}s,   SD = {SD_[-1]:.2E},   Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
+            print(f"------")
             #
-            #[SD_,tme_,tmeC_,tmeF_,tme,tmeC,tmeF,idx] = altGDMinFedDaskScttrSparseNew(r, eta_c, Ustr,  2*T, p,
-            #                                                                     dataPtrs,numWrkrs, client, lim, U0_init,S)
-            #timeAltGDMinFedSparse[mc,i] = tme
-            #timeCntrAltGDMinSparse[mc,i] = tmeC
-            #timeFedAltGDMinSparse[mc,i] = tmeF
-            #timeAltGDMinMC[mc,:idx] = tme_
-            #SDAltGDMinMC[mc,:idx] = SD_
-            #print(f"altGDMinSparse. time = {tme:.2f}s,  timeCenter = {tmeC:.2f}s,  timeFed = {tmeF:.2f}s,  SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
-            #print(f"-----")
+            [SD_,tme_,tmeC_,tmeF_,tme,tmeC,tmeF,idx] = altGDMinFedDaskScttrSparseNew(r, eta_c, Ustr,  2*T, p,
+                                                                                 dataPtrs,numWrkrs, client, lim, U0_init,S)
+            timeAltGDMinFedSparse[mc,i] = tme
+            timeCntrAltGDMinSparse[mc,i] = tmeC
+            timeFedAltGDMinSparse[mc,i] = tmeF
+            timeAltGDMinMC[mc,:idx] = tme_
+            SDAltGDMinMC[mc,:idx] = SD_
+            print(f"altGDMinSparse. time = {tme:.2f}s,  timeCenter = {tmeC:.2f}s,  timeFed = {tmeF:.2f}s,  SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
+            print(f"-----")
             #
-            #[SD_,tme_,tmeC_,tmeF_,tme,tmeC,tmeF,idx] = factGD(q,r,  Ustr, T, p, dataPtrs,
-            #                                                numWrkrs, client, lim, U0_init,np.diag(S),Vptr_)
-            #timeFactGD[mc,i] = tme
-            #timeCntrlFactGD[mc,i] = tmeC
-            #timeFedFactGD[mc,i] = tmeF
-            #timeFactGDMC[mc,:idx] = tme_
-            #SDFactGDMC[mc,:idx] = SD_
-            #print(f"factGD. time = {tme:.2f}s,  timeCenter = {tmeC:.2f}s, timeFed = {tmeF:.2f}s,  SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
-            #print(f"-----")
+            [SD_,tme_,tmeC_,tmeF_,tme,tmeC,tmeF,idx] = factGD(q,r,  Ustr, T, p, dataPtrs,
+                                                            numWrkrs, client, lim, U0_init,np.diag(S),Vptr_)
+            timeFactGD[mc,i] = tme
+            timeCntrlFactGD[mc,i] = tmeC
+            timeFedFactGD[mc,i] = tmeF
+            timeFactGDMC[mc,:idx] = tme_
+            SDFactGDMC[mc,:idx] = SD_
+            print(f"factGD. time = {tme:.2f}s,  timeCenter = {tmeC:.2f}s, timeFed = {tmeF:.2f}s,  SD = {SD_[-1]:.2E}, Workers  =  {numWrkrs}, n = {n}, q = {q}, r = {r}, p = {p}", flush = True)
+            print(f"-----")
             #
             #[SD_,tme_,tmeFU_,tmeFV_,tme,tmeFU,tmeFV,idx] = altMinGD(r, eta_c, Ustr,  2*T, p,
             #                                                         dataPtrs, numWrkrs, client, lim, U0_init, S, T_in)
@@ -210,21 +210,21 @@ if __name__ == '__main__':
         #---
     #---------------------------------------------------------------
     # Average (Mean) time to convergence
-    timeAltMinFedCol = np.sum(timeAltMinFedCol, axis=0)/MC
-    timeAltGDMinFedSparse = np.sum(timeAltGDMinFedSparse,axis=0)/MC
-    timeAltMinGD = np.sum(timeAltMinGD,axis=0)/MC
-    timeFactGD = np.sum(timeFactGD,axis=0)/MC
+    timeAltMinFedColAvg = np.sum(timeAltMinFedCol, axis=0)/MC
+    timeAltGDMinFedSparseAvg = np.sum(timeAltGDMinFedSparse, axis=0)/MC
+    timeAltMinGDAvg = np.sum(timeAltMinGD, axis=0)/MC
+    timeFactGDAvg = np.sum(timeFactGD, axis=0)/MC
     #-------------------------------------------------------------
     plotTimeAgnstWrkrs(np.array(numWrkrs_),  n,q,r,p,ID,lim,MC,
-                    timeAltMinFed = timeAltMinFedCol, 
-                    timeAltGDMinFedSparse = timeAltGDMinFedSparse,
-                    timeAltMinGD = timeAltMinGD,
-                    timeFactGD = timeFactGD, T_in  = T_in, median = 0)
+                    timeAltMinFed = timeAltMinFedColAvg, 
+                    timeAltGDMinFedSparse = timeAltGDMinFedSparseAvg,
+                    timeAltMinGD = timeAltMinGDAvg,
+                    timeFactGD = timeFactGDAvg, T_in  = T_in, median = 0)
     # Median time to convergence
-    timeAltMinFedColMed = np.median(timeAltMinFedCol)
-    timeAltGDMinFedSparseMed = np.median(timeAltGDMinFedSparse)
-    timeAltMinGDMed = np.median(timeAltMinGD)
-    timeFactGDMed = np.median(timeFactGD)
+    timeAltMinFedColMed = np.median(timeAltMinFedCol, axis = 0)
+    timeAltGDMinFedSparseMed = np.median(timeAltGDMinFedSparse,axis = 0)
+    timeAltMinGDMed = np.median(timeAltMinGD, axis = 0)
+    timeFactGDMed = np.median(timeFactGD, axis = 0)
     # -------------------------------------------------------
     plotTimeAgnstWrkrs(np.array(numWrkrs_),  n,q,r,p,ID,lim,MC,
                 timeAltMinFed = timeAltMinFedColMed, 
