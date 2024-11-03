@@ -209,15 +209,29 @@ if __name__ == '__main__':
         print(f"timeAltMinGD ={np.sum(timeAltMinGD,axis=0)/MC}", flush = True)
         #---
     #---------------------------------------------------------------
-    timeFactGD = np.sum(timeFactGD,axis=0)/MC
-    timeAltGDMinFedSparse = np.sum(timeAltGDMinFedSparse,axis=0)/MC
+    # Average (Mean) time to convergence
     timeAltMinFedCol = np.sum(timeAltMinFedCol, axis=0)/MC
+    timeAltGDMinFedSparse = np.sum(timeAltGDMinFedSparse,axis=0)/MC
     timeAltMinGD = np.sum(timeAltMinGD,axis=0)/MC
+    timeFactGD = np.sum(timeFactGD,axis=0)/MC
+    #-------------------------------------------------------------
     plotTimeAgnstWrkrs(np.array(numWrkrs_),  n,q,r,p,ID,lim,MC,
                     timeAltMinFed = timeAltMinFedCol, 
                     timeAltGDMinFedSparse = timeAltGDMinFedSparse,
                     timeAltMinGD = timeAltMinGD,
-                    timeFactGD = timeFactGD, T_in  = T_in)
+                    timeFactGD = timeFactGD, T_in  = T_in, median = 0)
+    # Median time to convergence
+    timeAltMinFedColMed = np.median(timeAltMinFedCol)
+    timeAltGDMinFedSparseMed = np.median(timeAltGDMinFedSparse)
+    timeAltMinGDMed = np.median(timeAltMinGD)
+    timeFactGDMed = np.median(timeFactGD)
+    # -------------------------------------------------------
+    plotTimeAgnstWrkrs(np.array(numWrkrs_),  n,q,r,p,ID,lim,MC,
+                timeAltMinFed = timeAltMinFedColMed, 
+                timeAltGDMinFedSparse = timeAltGDMinFedSparseMed,
+                timeAltMinGD = timeAltMinGDMed,
+                timeFactGD = timeFactGDMed, T_in  = T_in, median = 1)
+    #------------------------------------------------------------
     varDict = {"n":n,"q":q,"r":r,"p":p,"MC":MC,"ID":ID,
                 "timeAltMin_":timeAltMin_,"SDAltMin_":SDAltMin_,
                 "timeAltGDMin_":timeAltGDMin_, "SDAltGDMin_":SDAltGDMin_,

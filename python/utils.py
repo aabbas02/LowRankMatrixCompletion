@@ -10,8 +10,7 @@ def saveVariables(varDict,n,q,r,p,ID,MC):
 
 def plotTimeAgnstWrkrs(numWrkrs_,  n,q,r,p,ID,lim,MC, timeFactGD = -1*np.ones(1000),
                 timeAltGDMinFedSparse = -1*np.ones(1000), timeAltGDMinFedDaskScttr = -1*np.ones(1000),
-                timeAltMinCntrl = -1*np.ones(1000), timeAltMinFed = -1*np.ones(1000), timeAltMinGD = -1*np.ones(1000), T_in = 10
-               ):
+                timeAltMinCntrl = -1*np.ones(1000), timeAltMinFed = -1*np.ones(1000), timeAltMinGD = -1*np.ones(1000), T_in = 10, median = 1):
     fig1, _ = plt.subplots(nrows=1,ncols=1)
     # Plotting the data
     L = numWrkrs_.shape[0]
@@ -27,7 +26,10 @@ def plotTimeAgnstWrkrs(numWrkrs_,  n,q,r,p,ID,lim,MC, timeFactGD = -1*np.ones(10
     plt.xticks(numWrkrs_)
     #plt.show()
     # Save the figure
-    fig1.savefig(f"figures/tmeAgnstWrkrs_n_{n}_q_{q}_r_{r}_p_{p}_T_in_{T_in}_MC_{MC}_ID_{ID}_.pdf", bbox_inches='tight')
+    if median:
+        fig1.savefig(f"figures/tmeAgnstWrkrsMedian_n_{n}_q_{q}_r_{r}_p_{p}_T_in_{T_in}_MC_{MC}_ID_{ID}_.pdf", bbox_inches='tight')    
+    else:
+        fig1.savefig(f"figures/tmeAgnstWrkrsMean_n_{n}_q_{q}_r_{r}_p_{p}_T_in_{T_in}_MC_{MC}_ID_{ID}_.pdf", bbox_inches='tight')
 
 
 def plotErrAgnstTime(numWrkrs,n,q,r,p,ID,lim,MC,
