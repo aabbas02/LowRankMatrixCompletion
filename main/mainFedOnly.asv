@@ -10,7 +10,7 @@ cd ..
 addpath(genpath('.\functions'));
 cd(dir)    
 %---------------------------------
-r = 2;
+r = 3;
 n = 500;
 q = 1000;
 % sub sample X with probaility p
@@ -21,7 +21,7 @@ T = 25 + space;
 delete(gcp('nocreate'))
 parpool(numWrkrs,'IdleTimeout',Inf,'SpmdEnabled',false)
 pool = gcp;
-MC = 2;
+MC = 3;
 tic 
 ID = randi(1e3)+5
 ID = 7891359
@@ -137,13 +137,13 @@ timeAltGDFed1 = sum(timeAltGDFed1,1)/MC;
 SDAltGDMineta1 = sum(SDAltGDMineta1,1)/MC;
 timeAltGDMineta1 = sum(timeAltGDMineta1,1)/MC;
 %---------------------------------------
-pltFedOnly(timeAltMinParfor, SDAltMinParfor, ...
-            timeAltMinPrvt, SDAltMinPrvt, timeAltGDFedHalf, SDAltGDFedHalf, ...
-            timeAltGDFed,SDAltGDFed, timeAltGDFed1,SDAltGDFed1,...
-            timeAltGDMineta1, SDAltGDMineta1,...
-            n, q, r, p, numWrkrs, MC, T,Tsvd)
+%pltFedOnly(timeAltMinParfor, SDAltMinParfor, ...
+%            timeAltMinPrvt, SDAltMinPrvt, timeAltGDFedHalf, SDAltGDFedHalf, ...
+%            timeAltGDFed,SDAltGDFed, timeAltGDFed1,SDAltGDFed1,...
+%            timeAltGDMineta1, SDAltGDMineta1,...
+%            n, q, r, p, numWrkrs, MC, T,Tsvd)
 
-saveFigFed(1,dir,21,saveName)
+PlotAndSaveFigFed(1,dir,21,saveName)
 %---
 function pltFedOnly(timeAltMinParfor, SDAltMinParfor, ...
                     timeAltMinPrvt, SDAltMinPrvt, timeAltGDFedHalf, SDAltGDFedHalf, ...
@@ -213,7 +213,7 @@ function pltFedOnly(timeAltMinParfor, SDAltMinParfor, ...
     %savefig([stringTitle, '.fig']);
 end
 %---
-function saveFigFed(numData,dir,timeSD,saveName)
+function PlotAndSaveFigFed(numData,dir,timeSD,saveName)
     cd (dir)
     clc
     close all
@@ -354,8 +354,8 @@ function saveFigFed(numData,dir,timeSD,saveName)
         %-
         %semilogy(timeAltGDFed1(timeAltGDFed1 <= timeSD ),...
         %       SDAltGDFed1(timeAltGDFed1 <= timeSD),'DisplayName', ...
-        %      'FactGD (Fed./Prvt. $c = 1.0$)', ...
-        %      'LineWidth',1.35,'Marker','diamond','MarkerSize',9,'Color',"#7E2FEE")
+              'FactGD (Fed./Prvt. $c = 1.0$)', ...
+              'LineWidth',1.35,'Marker','diamond','MarkerSize',9,'Color',"#7E2FEE")
         grid on
         legend('Interpreter','Latex','Fontsize',9.25, 'Location','Northeast')
         yHndl = ylabel('$\mathrm{SD}(\mathbf{U}^{(t)}, \mathbf{U}^*)$','Interpreter','Latex','Fontsize',14.0);
