@@ -9,9 +9,9 @@ cd (newdir)
 addpath(genpath('.\functions'));
 cd(dir)    
 %---------------------------------
-r = 3;
-n = 500;
-q = 1000;
+r = 20;
+n = 5000;
+q = 10000;
 % sub sample X with probaility p
 p = 0.05;
 numWrkrs = 5;
