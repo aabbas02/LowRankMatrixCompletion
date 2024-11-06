@@ -21,7 +21,7 @@ T = 25 + space;
 delete(gcp('nocreate'))
 parpool(numWrkrs,'IdleTimeout',Inf,'SpmdEnabled',false)
 pool = gcp;
-MC = 2;
+MC = 1;
 tic 
 ID = randi(1e3)+5
 ID = 7891359
@@ -362,8 +362,8 @@ function saveFigFed(numData,dir,timeSD,saveName)
         yHndl.Position(1) = yHndl.Position(1) + 1.25;
         yHndl.Position(2) = yHndl.Position(2) - 0.05*yHndl.Position(2);
         xlabel('t/seconds','Fontsize',13,'Interpreter','Latex')
-        title("n = " + n + ", q = " + q +...
-              ", r = " + r + ", p = " + p + ", Workers =" + num2str(numWrkrs),...
+        title(["n = "  num2str(n)  ", q = "  num2str(q) +...
+              ", r = "  num2str(r)  ", p = "  num2str(p)  ", Workers ="  num2str(numWrkrs)],...
                'Interpreter', 'Latex', 'FontSize',14)
         cores = feature('numCores');
         stringTitle = ['Noisy_Fed_Wrkrs_',num2str(numWrkrs),'Max',num2str(cores),'_MC_',num2str(MC),...
