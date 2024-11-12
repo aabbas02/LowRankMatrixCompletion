@@ -51,6 +51,7 @@ parfor j = 1 : q
     end
 end
 saveName = "n_" + num2str(n) + "_q_" + num2str(q) + "_r_" + num2str(r) + "_p_"+...
+saveName = "Noisy_n_" + num2str(n) + "_q_" + num2str(q) + "_r_" + num2str(r) + "_p_"+...
             num2str(p) + "_MC_" + num2str(MC) + "_randID_" + num2str(ID) + ".mat";
 for mc = 1 : MC
     idx = randperm(n*q);

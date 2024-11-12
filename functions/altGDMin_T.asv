@@ -1,4 +1,4 @@
-function [SDVals,timeArr,timeQRArr,timeComm] = altGDMin_T(r,eta_c,...
+function [SDVals,timeArr,timeQRArr] = altGDMin_T(r,eta_c,...
                                      Ustr,Xzeros, T,p, ...
                                      rowIdx,Xcol,numWrkrs,Tsvd)
 
@@ -17,6 +17,9 @@ function [SDVals,timeArr,timeQRArr,timeComm] = altGDMin_T(r,eta_c,...
     n = size(Xzeros,1);
     q = size(Xzeros,2);
     tStart = tic;
+    %[U,S] = fedSvd(Xzeros/p,r,Tsvd,numWrkrs);
+    %[U0_init,S,~] = svds(Xzeros/p,r);
+    %U = U0_init(:,1:r);
     [Unew,S] = fedSvd(Xzeros/p,r,Tsvd,numWrkrs);
     mu = min(vecnorm(Unew'))*sqrt(n/r);
     % Initialization of Uzero and Vzero after Projection 
@@ -41,11 +44,9 @@ function [SDVals,timeArr,timeQRArr,timeComm] = altGDMin_T(r,eta_c,...
     end
     grad_ = zeros(n,r,numWrkrs);  
     tWrkrs = zeros(numWrkrs,1);
-    timeComm =  zeros(T,1);
     for i = 1 : T
         %tStart = tic;
         %start =  ticBytes(gcp);
-        tStartFed = tic;
         parfor j = 1 : numWrkrs
             tStartWrkr = tic;
             tmp = zeros(r,q/numWrkrs);
@@ -78,9 +79,8 @@ function [SDVals,timeArr,timeQRArr,timeComm] = altGDMin_T(r,eta_c,...
             %M(linIdx) = diff;
             M = sparse(rows,cols,diff,n,q/numWrkrs);
             grad_(:,:,j) = M*tmp'; 
-            tWrkrs(j) = toc(tStartWrkr);
+            tWrkrs(j) = to
         end
-        tEndFed = toc(tStartFed) - max(tWrkrs);
         %tocBytes(gcp,start)
         grad = sum(grad_,3);
         U = U - eta*grad;
@@ -91,7 +91,6 @@ function [SDVals,timeArr,timeQRArr,timeComm] = altGDMin_T(r,eta_c,...
         tEnd = toc(tStart);
         timeQRArr(i + 1) = timeQRArr(i) + tQR;
         timeArr(i + 1) = timeArr(i) + tEnd;
-        timeComm(i + 1) = timeComm(i) + tEndFed;
         SDVals(i + 1) = norm( (eye(n) - U*U')*Ustr ,'fro' );
         tStart = tic;
     end        
