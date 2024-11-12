@@ -14,7 +14,7 @@ n = 5000;
 q = 10000;
 % sub sample X with probaility p
 p = 0.05;
-numWrkrs = 5;
+numWrkrs = 10;
 space = 25;
 T = 25 + space;
 delete(gcp('nocreate'))
@@ -23,8 +23,8 @@ pool = gcp;
 MC = 1;
 tic 
 ID = randi(1e3)+5
-ID = 7891359
-ID = 2
+%ID = 7891359
+%ID = 2
 %--------------------------------------------------------------------------
 % generate rank-r X*
 U = orth(randn(n,r));
@@ -56,7 +56,6 @@ parfor j = 1 : q
     end
 end
 saveName = "n_" + num2str(n) + "_q_" + num2str(q) + "_r_" + num2str(r) + "_p_"+...
-saveName = "Noisy_n_" + num2str(n) + "_q_" + num2str(q) + "_r_" + num2str(r) + "_p_"+...
             num2str(p) + "_MC_" + num2str(MC) + "_randID_" + num2str(ID) + ".mat";
 for mc = 1 : MC
     idx = randperm(n*q);
@@ -79,27 +78,27 @@ for mc = 1 : MC
     end
     %-----------------------------------------------------------------------------------
     % --- AltGD (Federated)
-    kAltGD = 2;
-    [SDAltGDFedHalf(mc,:), timeAltGDFedHalf(mc,:)] = factGDEta(Xzeros,r,Ustr,kAltGD*T,p,...
-                                                     rowIdx,colIdx,Xcol,numWrkrs,Tsvd,0.5);
+    %kAltGD = 2;
+    %[SDAltGDFedHalf(mc,:), timeAltGDFedHalf(mc,:)] = factGDEta(Xzeros,r,Ustr,kAltGD*T,p,...
+    %                                                 rowIdx,colIdx,Xcol,numWrkrs,Tsvd,0.5);
     % --- AltGD (Federated)
     kAltGD = 2;
     [SDAltGDFed(mc,:), timeAltGDFed(mc,:)] = factGDEta(Xzeros,r,Ustr,kAltGD*T,p,...
                                                        rowIdx,colIdx,Xcol,numWrkrs,Tsvd,0.75);
     % --- AltGD (Federated)
-    kAltGD = 2;
-    [SDAltGDFed1(mc,:), timeAltGDFed1(mc,:)] = factGDEta(Xzeros,r,Ustr,kAltGD*T,p,...
-                                                         rowIdx,colIdx,Xcol,numWrkrs,Tsvd,1);
+    %kAltGD = 2;
+    %[SDAltGDFed1(mc,:), timeAltGDFed1(mc,:)] = factGDEta(Xzeros,r,Ustr,kAltGD*T,p,...
+    %                                                     rowIdx,colIdx,Xcol,numWrkrs,Tsvd,1);
     % --- AltMin (Parfor)
     [SDAltMinParfor(mc,:), timeAltMinParfor(mc,:)] = altMinParfor_T(Xzeros,r,p, ...
 									                              Ustr,T, ...
 									                              rowIdx,Xcol,colIdx,Xrow,numWrkrs,Tsvd);  
     
     % --- AltMin (Fed./Prvt.)
-    T_inner =  10;
-    [SDAltMinPrvt(mc,:), timeAltMinPrvt(mc,:)] = altMinPrvt_T(Xzeros,r,p, ...
-                                                               Ustr,T, ...
-                                                               rowIdx,Xcol,T_inner,numWrkrs,Tsvd);
+    %T_inner =  10;
+    %[SDAltMinPrvt(mc,:), timeAltMinPrvt(mc,:)] = altMinPrvt_T(Xzeros,r,p, ...
+    %                                                           Ustr,T, ...
+    %                                                           rowIdx,Xcol,T_inner,numWrkrs,Tsvd);
 
     % --- AltGDMin
     kAltGDMin = 2;
