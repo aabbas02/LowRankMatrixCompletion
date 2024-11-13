@@ -9,12 +9,12 @@ cd ..
 addpath(genpath('.\functions'));
 cd(dir)    
 %---------------------------------
-r = 2;
-n = 100;
-q = 500;
+r = 20;
+n = 5000;
+q = 10000;
 % sub sample X with probaility p
-p = 0.1;
-numWrkrs = 5;
+p = 0.05;
+numWrkrs = 10;
 space = 25;
 T = 25 + space;
 delete(gcp('nocreate'))
@@ -22,9 +22,9 @@ parpool(numWrkrs,'IdleTimeout',Inf,'SpmdEnabled',false)
 pool = gcp;
 MC = 1;
 tic 
-ID = randi(1e3)+5
-ID = 7891359
-ID = 2
+ID = randi(1e3)+5;
+%ID = 7891359
+%ID = 2
 %--------------------------------------------------------------------------
 % generate rank-r X*
 U = orth(randn(n,r));
@@ -386,6 +386,7 @@ cores = feature('numCores');
 stringTitle = ['Comm_Fed_Wrkrs_',num2str(numWrkrs),'Max',num2str(cores),'_MC_',num2str(MC),...
     '_n_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
     'T_',num2str(T),'_id',num2str(randi(1e3,1))];
+exportgraphics(gcf,[stringTitle,'.pdf'])
 cd(dir)
 %--------------------------------------------
 figure
@@ -402,6 +403,7 @@ semilogy(timeCommAltMinPrvt(timeAltMinPrvt <= timeSD ),...
     SDAltMinPrvt(timeAltMinPrvt <= timeSD),'DisplayName', ...
     'AltMin(Fed./Prvt.)', ...
     'LineWidth',1.35,'Marker','*','MarkerSize',9,'Color',"#EDB120")
+
 %-
 %semilogy(timeAltGDFedHalf(timeAltGDFedHalf <= timeSD ),...
 %       SDAltGDFedHalf(timeAltGDFedHalf <= timeSD),'DisplayName', ...
@@ -431,7 +433,7 @@ stringTitle = ['Comm_Fed_Wrkrs_',num2str(numWrkrs),'Max',num2str(cores),'_MC_',n
     '_n_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
     'T_',num2str(T),'_id',num2str(randi(1e3,1))];
 cd(dir)
-%exportgraphics(gcf,[stringTitle,'.pdf'])
+exportgraphics(gcf,[stringTitle,'.pdf'])
 end
 %---
 function [SDVals, timeArr, timeComm] = factGDEta(Xzeros,r,Ustr,T,p,rowIdx,colIdx,Xcol,numWrkrs,Tsvd,eta)
