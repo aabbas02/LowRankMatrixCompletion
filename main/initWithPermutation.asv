@@ -12,8 +12,8 @@ cd(dir)
 r = 3;
 n = 500;
 q = 500;
-m = 50;
-numBlocks = 5;
+m = 100;
+numBlocks = 10;   %effectively, 
 r_ = ones(1,numBlocks)*(m/numBlocks);
 MC = 1;
 % generate rank-r X*
@@ -36,24 +36,31 @@ for k = 1 : q
     ykPerm_{k} = yk_{k}(pi_map);
     %B_tilde = zeros(length(r_),d);
     %Y_tilde = zeros(length(r_),size(Y,2));
+    AkCllps_{k} = zeros(length(r_),n);
+    ykCllps_{k} = zeros(length(r_),1);
         for i = 1 : length(r_)
             start = sum(r_(1:i)) - r_(i) + 1;
             stop  = sum(r_(1:i));
-            AkCllps_{k} = sum(Ak_{k}(start:stop,:));
-            ykCllps_{k} = sum(ykPerm_{k}(start:stop,:));
+            AkCllps_{k}(i,:) = sum(Ak_{k}(start:stop,:));
+            ykCllps_{k}(i) = sum(ykPerm_{k}(start:stop,:));
             %B_tilde(i,:) = sum(B( start:stop,: ) );
             %Y_tilde(i,:) = sum(Y( start:stop,: ) );
         end
     M(:, k)  = Ak_{k}'*yk_{k}; 
-    MCllps(:,k) = AkCllps_{k}'*ykCllps_{k}
+    MCllps(:, k) = AkCllps_{k}'*ykCllps_{k};
     MPerm(:, k) = Ak_{k}'*ykPerm_{k};
 end
 [U0,~,~,] = svd(M,"econ");
-U0 = U0(:,r);
+U0 = U0(:,1:r);
+%-----------------------------------
+[U0Cllps,~,~] = svd(MCllps,"econ");
+U0Cllps = U0Cllps(:,1:r);
+%---------------------------------------
 [U0Perm,~,~] = svd(MPerm,"econ");
-U0Perm = U0Perm(:,r);
+U0Perm = U0Perm(:,1:r);
+%------------------------------
 SDU0 = norm((eye(n) - Ustr*Ustr')*U0)
-
+SDU0Cllps = norm((eye(n) -  Ustr*Ustr')*U0Cllps)
 SDU0Perm = norm((eye(n) - Ustr*Ustr')*U0Perm)
 function [pi_map] = get_permutation_r(n,r_)
     pi_map = zeros(n,1);

@@ -10,10 +10,10 @@ addpath(genpath('.\functions'));
 cd(dir)    
 %---------------------------------
 r = 3;
-n = 5000;
-q = 5000;
-m = 1000;
-numBlocks = 500;
+n = 100;
+q = 10000;
+m = 200;
+numBlocks = 25;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 MC = 1;
 % generate rank-r X*
@@ -26,9 +26,9 @@ AkCllps_ = cell(q,1);
 yk_ = cell(q,1);
 ykCllps_ = cell(q,1);
 ykPerm_ = cell(q,1);
-M = zeros(q,1);
-MCllps = zeros(q,1);
-MPerm = zeros(q,1);
+M = zeros(n,q);
+MCllps = zeros(n,q);
+MPerm = zeros(n,q);
 for k = 1 : q
     Ak_{k} = randn(m,n);
     yk_{k} = Ak_{k}*X(:,k);
