@@ -3,10 +3,9 @@ close all
 clear all
 dir = pwd;
 % For linux, replace '\' with '/'
-idcs   = strfind(dir,'\');
-newdir = dir(1:idcs(end)-1);
-cd (newdir)
+cd ..
 addpath(genpath('.\functions'));
+addpath(genpath('.\functionsMtrxSnsng'));
 cd(dir)    
 %---------------------------------
 r = 3;
