@@ -3,17 +3,16 @@ close all
 clear all
 dir = pwd;
 % For linux, replace '\' with '/'
-idcs   = strfind(dir,'\');
-newdir = dir(1:idcs(end)-1);
-cd (newdir)
+cd ..
 addpath(genpath('.\functions'));
+addpath(genpath('.\functionsMtrxSnsng'));
 cd(dir)    
 %---------------------------------
-r = 3;
-n = 500;
-q = 500;
-m = 100;
-numBlocks = 10;   %effectively, 
+r = 4;
+n = 600;
+q = 600;
+m = 50;
+numBlocks = 25;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 MC = 1;
 % generate rank-r X*
@@ -26,9 +25,9 @@ AkCllps_ = cell(q,1);
 yk_ = cell(q,1);
 ykCllps_ = cell(q,1);
 ykPerm_ = cell(q,1);
-M = zeros(q,1);
-MCllps = zeros(q,1);
-MPerm = zeros(q,1);
+M = zeros(n,q);
+MCllps = zeros(n,q);
+MPerm = zeros(n,q);
 for k = 1 : q
     Ak_{k} = randn(m,n);
     yk_{k} = Ak_{k}*X(:,k);
@@ -59,13 +58,15 @@ U0Cllps = U0Cllps(:,1:r);
 [U0Perm,~,~] = svd(MPerm,"econ");
 U0Perm = U0Perm(:,1:r);
 %------------------------------
-SDU0 = norm((eye(n) - Ustr*Ustr')*U0)
-SDU0Cllps = norm((eye(n) -  Ustr*Ustr')*U0Cllps)
-SDU0Perm = norm((eye(n) - Ustr*Ustr')*U0Perm)
+SDU0 = norm((eye(n) - Ustr*Ustr')*U0);
+SDU0Cllps = norm((eye(n) -  Ustr*Ustr')*U0Cllps);
+SDU0Perm = norm((eye(n) - Ustr*Ustr')*U0Perm);
+T = 500;
+altGDMin_MtrxSensing(Ak_, yk_, AkCllps_, ykCllps_, U0,r,T,Ustr)
 function [pi_map] = get_permutation_r(n,r_)
     pi_map = zeros(n,1);
     for t = 1 : length(r_)
-        start  = sum(r_(1:t)) - r_(t) +1;
+        start  = sum(r_(1:t)) - r_(t) + 1;
         stop   = sum(r_(1:t));
         idx    = start:stop;
         idx    = idx(randperm(length(idx)));

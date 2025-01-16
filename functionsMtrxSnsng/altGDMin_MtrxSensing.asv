@@ -1,0 +1,21 @@
+function [SDVals, timeArr] = altGDMinCntrl_MtrxSnsng(Ak_, yk_, AKCllps_, ykCllps_, U0Cllps)
+    m = size(Ak_,1);
+    n = size(Ak_,2);
+    SDVals = zeros(T+1,1);
+    U = U0Cllps;
+    SDVals(1) = norm((eye(n) - U*U')*Ustr ,'fro');
+    V = zeros(r,q);
+    for i = 1 : T
+        % V update
+        for k = 1 : q
+            V(:,k) = (Ak_{k}*U)\yk_{k};
+        end
+        % U update 
+        
+        timeEnd = toc(tStart);
+        timeArr(i + 1) = timeArr(i)  +  timeEnd;
+        [Uproj,~,~] = qr(U,'econ');
+        SDVals(i + 1) = norm( (eye(n) - Uproj*Uproj')*Ustr ,'fro' );
+        tStart = tic;
+    end
+end

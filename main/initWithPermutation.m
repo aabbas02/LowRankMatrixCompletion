@@ -8,9 +8,9 @@ addpath(genpath('.\functions'));
 addpath(genpath('.\functionsMtrxSnsng'));
 cd(dir)    
 %---------------------------------
-r = 3;
-n = 100;
-q = 10000;
+r = 2;
+n = 1000;
+q = 1000;
 m = 200;
 numBlocks = 25;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
@@ -64,7 +64,7 @@ SDU0Perm = norm((eye(n) - Ustr*Ustr')*U0Perm)
 function [pi_map] = get_permutation_r(n,r_)
     pi_map = zeros(n,1);
     for t = 1 : length(r_)
-        start  = sum(r_(1:t)) - r_(t) +1;
+        start  = sum(r_(1:t)) - r_(t) + 1;
         stop   = sum(r_(1:t));
         idx    = start:stop;
         idx    = idx(randperm(length(idx)));
