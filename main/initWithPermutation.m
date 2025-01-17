@@ -61,6 +61,8 @@ U0Perm = U0Perm(:,1:r);
 SDU0 = norm((eye(n) - Ustr*Ustr')*U0)
 SDU0Cllps = norm((eye(n) -  Ustr*Ustr')*U0Cllps)
 SDU0Perm = norm((eye(n) - Ustr*Ustr')*U0Perm)
+
+
 function [pi_map] = get_permutation_r(n,r_)
     pi_map = zeros(n,1);
     for t = 1 : length(r_)

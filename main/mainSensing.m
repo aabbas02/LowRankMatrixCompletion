@@ -11,7 +11,7 @@ cd(dir)
 r = 4;
 n = 600;
 q = 600;
-m = 50;
+m = 25;
 numBlocks = 25;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 MC = 1;
@@ -61,8 +61,9 @@ U0Perm = U0Perm(:,1:r);
 SDU0 = norm((eye(n) - Ustr*Ustr')*U0);
 SDU0Cllps = norm((eye(n) -  Ustr*Ustr')*U0Cllps);
 SDU0Perm = norm((eye(n) - Ustr*Ustr')*U0Perm);
-T = 500;
-altGDMin_MtrxSensing(Ak_, yk_, AkCllps_, ykCllps_, U0,r,T,Ustr)
+T = 200;
+altGDMin_MtrxSensingPerm(Ak_, ykPerm_,U0Cllps,r,T,Ustr)
+%altGDMin_MtrxSensing(Ak_, yk_, U0,r,T,Ustr)
 function [pi_map] = get_permutation_r(n,r_)
     pi_map = zeros(n,1);
     for t = 1 : length(r_)
