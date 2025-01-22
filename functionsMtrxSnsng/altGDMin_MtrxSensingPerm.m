@@ -1,4 +1,4 @@
-function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,U0Cllps,r,T,Ustr)
+function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,U0Cllps,r,T,Ustr,r_)
     %---
     % Algorithm
     % Init: U^(0), B^(0)
@@ -23,12 +23,17 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,U0Cl
             else     % full measurements least-squares
                 B(:,k) = (Ak_{k}*U)\ykPerm_{k};
             end
-            % min over P_k
+            % min over P_k 
             yHat_k = Ak_{k}*U*B(:,k);
-            [~,idx1] = sort(yHat_k);
-            [~,idx2] = sort(ykPerm_{k});
-            Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
-            %b(idx1) = ykPerm_{k}(idx2); 
+            for s = 1 : length(r_)
+                start = sum(r_(1:s)) - r_(s) + 1;
+                stop = sum(r_(1:s));
+                [~,idx1] = sort(yHat_k(start:stop));
+                [~,idx2] = sort(ykPerm_{k}(start:stop));
+                idx1 = start - 1 + idx1;
+                idx2 = start - 1 + idx2;
+                Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
+            end
         end
         % U update
         X = U*B;

@@ -8,11 +8,11 @@ addpath(genpath('.\functions'));
 addpath(genpath('.\functionsMtrxSnsng'));
 cd(dir)    
 %---------------------------------
-r = 2;
+r = 5;
 n = 600;
-q = 600;
+q = 1000;
 m = 100;
-numBlocks = 25;   %effectively, m_new = numBlocks
+numBlocks = 8;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 MC = 1;
 % generate rank-r X*
@@ -59,7 +59,7 @@ SDU0Cllps = norm((eye(n) -  Ustr*Ustr')*U0Cllps);
 SDU0Perm = norm((eye(n) - Ustr*Ustr')*U0Perm);
 T = 100;
 SDVals_UnPerm = altGDMin_MtrxSensing(Ak_, yk_, U0,r,T,Ustr);
-SDVals_sLcl = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr);
+SDVals_sLcl = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_);
 SDVals_Perm = altGDMin_MtrxSensing(Ak_, ykPerm_, U0Perm,r,T,Ustr);
 
 figure;
@@ -82,8 +82,9 @@ title("n = " + n + ", q = " + q +...
       ", r = " + r + ", m = " + m + ", num Blocks = " + numBlocks,...
        'Interpreter', 'Latex', 'FontSize',14)
 
- legend('Interpreter', 'Latex', 'Fontsize', 9);
-
+legend('Interpreter', 'Latex', 'Fontsize', 9);
+ylabel("$SD(U,U^*)$","FontSize",14,'Interpreter','Latex')
+xlabel('Iterations (t)', 'FontSize',14, 'Interpreter','Latex')
 function [pi_map] = get_permutation_r(n,r_)
     pi_map = zeros(n,1);
     for t = 1 : length(r_)
