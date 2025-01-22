@@ -8,7 +8,7 @@ addpath(genpath('.\functions'));
 addpath(genpath('.\functionsMtrxSnsng'));
 cd(dir)    
 %---------------------------------
-r = 1;
+r = 2;
 n = 600;
 q = 600;
 m = 100;
@@ -57,9 +57,30 @@ U0Perm = U0Perm(:,1:r);
 SDU0 = norm((eye(n) - Ustr*Ustr')*U0);
 SDU0Cllps = norm((eye(n) -  Ustr*Ustr')*U0Cllps);
 SDU0Perm = norm((eye(n) - Ustr*Ustr')*U0Perm);
-T = 2000;
-SDVals = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr)
-%altGDMin_MtrxSensing(Ak_, yk_, U0,r,T,Ustr)
+T = 200;
+SDVals_UnPerm = altGDMin_MtrxSensing(Ak_, yk_, U0,r,T,Ustr);
+SDVals_sLcl = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr);
+SDVals_Perm = altGDMin_MtrxSensing(Ak_, ykPerm_, U0Perm,r,T,Ustr);
+
+figure;
+semilogy(SDVals_sLcl, ...
+    'DisplayName', 'SDVals (s-Local)', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 5);
+hold on;
+semilogy(SDVals_Perm, ...
+    'DisplayName', 'SDVals (Naive)', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 5);
+%
+semilogy(SDVals_UnPerm, ...
+    'DisplayName', 'SDVals (Un=permuted)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 5);
+
+stringTitle = ['Lab_Wrkrs', num2str(numWrkrs),'_MC_', num2str(MC), ...
+               '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_m_', num2str(m)];
+
+savefig([stringTitle, '.fig']);
+
+title("n = " + n + ", q = " + q +...
+      ", r = " + r + ", m = " + m ...
+       'Interpreter', 'Latex', 'FontSize',14)
+
 function [pi_map] = get_permutation_r(n,r_)
     pi_map = zeros(n,1);
     for t = 1 : length(r_)

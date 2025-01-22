@@ -39,10 +39,9 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,U0Cl
         for k = 1 : q
             gradU = gradU + Ak_{k}'*(Ak_{k}*X(:,k)-ykPerm_{k})*B(:,k)';
         end
-        eta = 1e-2/norm(X0)^2;
+        eta = 5e-1/norm(X0)^2;
         U = U - (eta/m)*gradU;
         [U,~,~] = qr(U,'econ');
         SDVals(i + 1) = norm( (eye(n) - U*U')*Ustr ,'fro' );
-        norm( (eye(n) - U*U')*Ustr ,'fro' )
     end
 end 
