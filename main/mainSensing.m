@@ -8,11 +8,11 @@ addpath(genpath('.\functions'));
 addpath(genpath('.\functionsMtrxSnsng'));
 cd(dir)    
 %---------------------------------
-r = 4;
+r = 3;
 n = 600;
 q = 600;
-m = 25;
-numBlocks = 25;   %effectively, m_new = numBlocks
+m = 100;
+numBlocks = 50;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 MC = 1;
 % generate rank-r X*
@@ -33,8 +33,6 @@ for k = 1 : q
     yk_{k} = Ak_{k}*X(:,k);
     pi_map = get_permutation_r(m,r_);
     ykPerm_{k} = yk_{k}(pi_map);
-    %B_tilde = zeros(length(r_),d);
-    %Y_tilde = zeros(length(r_),size(Y,2));
     AkCllps_{k} = zeros(length(r_),n);
     ykCllps_{k} = zeros(length(r_),1);
         for i = 1 : length(r_)
@@ -42,8 +40,6 @@ for k = 1 : q
             stop  = sum(r_(1:i));
             AkCllps_{k}(i,:) = sum(Ak_{k}(start:stop,:));
             ykCllps_{k}(i) = sum(ykPerm_{k}(start:stop,:));
-            %B_tilde(i,:) = sum(B( start:stop,: ) );
-            %Y_tilde(i,:) = sum(Y( start:stop,: ) );
         end
     M(:, k)  = Ak_{k}'*yk_{k}; 
     MCllps(:, k) = AkCllps_{k}'*ykCllps_{k};
@@ -61,8 +57,8 @@ U0Perm = U0Perm(:,1:r);
 SDU0 = norm((eye(n) - Ustr*Ustr')*U0);
 SDU0Cllps = norm((eye(n) -  Ustr*Ustr')*U0Cllps);
 SDU0Perm = norm((eye(n) - Ustr*Ustr')*U0Perm);
-T = 200;
-altGDMin_MtrxSensingPerm(Ak_, ykPerm_,U0Cllps,r,T,Ustr)
+T = 1000;
+SDVals = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr)
 %altGDMin_MtrxSensing(Ak_, yk_, U0,r,T,Ustr)
 function [pi_map] = get_permutation_r(n,r_)
     pi_map = zeros(n,1);

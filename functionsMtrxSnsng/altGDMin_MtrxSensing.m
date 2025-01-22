@@ -13,14 +13,12 @@ function [SDVals] = altGDMin_MtrxSensing(Ak_, yk_, U0,r,T,Ustr)
         % sort the entries of B
         for k = 1 : q
             B(:,k) = (Ak_{k}*U)\yk_{k};
-        end
-       
+        end       
         % U update
         X = U*B;
         if i == 1
             X0 = X;
         end
-        
         gradU = 0*gradU;
         for k = 1 : q
             gradU = gradU + Ak_{k}'*(Ak_{k}*X(:,k)-yk_{k})*B(:,k)';
