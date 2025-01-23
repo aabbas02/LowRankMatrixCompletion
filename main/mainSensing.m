@@ -12,7 +12,7 @@ r = 5;
 n = 600;
 q = 1000;
 m = 100;
-numBlocks = 20;   %effectively, m_new = numBlocks
+numBlocks = 25;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 100;
 MC = 100;
