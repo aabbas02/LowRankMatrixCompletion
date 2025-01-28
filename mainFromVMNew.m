@@ -77,7 +77,7 @@ for mc = 1 : MC
         nrmsPrev = sqrt(sum(U_t_prev.^2,2));
         error(2,t,mc) = subspace(Ustar,U_t_prev,n)/sqrt(r);
         if mod (t,100) == 0
-            fprintf('Element Wise Median. n = %d, q = %d, r = %d, p = %f, L = %d, L_byz = %d, C1 = %d. Iteration %d, SD Error: %f\n', n,q,r,p,L,L_byz,C1, t, error(2,t,mc));
+            %fprintf('Element Wise Median. n = %d, q = %d, r = %d, p = %f, L = %d, L_byz = %d, C1 = %d. Iteration %d, SD Error: %f\n', n,q,r,p,L,L_byz,C1, t, error(2,t,mc));
         end
     end
     %{
