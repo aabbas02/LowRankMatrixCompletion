@@ -39,4 +39,5 @@ function plotErrorMean(error_mean_MC, n, q, r, p, L, L_byz, MC, C1,attck)
                    '_ID', num2str(ID)];
     % Save the figure
     savefig([stringTitle, '.fig']);
+    save("vars"+ stringTitle + ".mat","error_mean_MC","n","q","r","p","L","L_byz","MC","C1","attck")
 end
