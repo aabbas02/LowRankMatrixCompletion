@@ -2,8 +2,8 @@
 tic
 n = 1000; % number of rows
 q = 500;  % number of columns
-r = 4;  % rank
-p = 0.1; % probability of observing each entry
+r = 3;  % rank
+p = 0.2; % probability of observing each entry
 Telem = 5000;  % number of iterations
 Tgm = 5000;
 mu = 2;  % parameter for projection operator
@@ -66,7 +66,7 @@ for mc = 1 : MC
            if accept_update
               I_t = [I_t, i];  % Add index i to the set I_t
            else
-              fprintf('Node %d rejected based on norm condition.\n', i);
+              %fprintf('Node %d rejected based on norm condition.\n', i);
            end   
         end
         accepted_deltas = stored_delta(:,:,I_t);
@@ -195,7 +195,7 @@ for mc = 1 : MC
             if accept_update
                 I_t = [I_t, i];  % Add index i to the set I_t
             else
-                fprintf('Node %d rejected based on norm condition.\n', i);
+                %fprintf('Node %d rejected based on norm condition.\n', i);
             end
          end
          accepted_deltas = stored_delta(:,:,I_t);
