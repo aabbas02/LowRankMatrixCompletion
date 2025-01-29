@@ -17,7 +17,7 @@ Bstar = randn(r, q);
 Xstar = Ustar * Bstar;
 [~,sigma,~] = svds(Xstar,r);
 kappa_tilde = sigma(1,1)/sigma(r,r);
-MC = 1;
+MC = 101;
 error = zeros(4,Telem,MC);
 for mc = 1 : MC
     % Generate Y and S
