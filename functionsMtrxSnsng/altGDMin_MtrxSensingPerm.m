@@ -6,8 +6,8 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,U0Cl
     % if t == 0, update bk by collapsed estimate, else update by full
     % estimate
     % repeat
-    m = size(Ak_{1},1);
-    n = size(Ak_{1},2);
+    m = size(Ak_{1}, 1);
+    n = size(Ak_{1}, 2);
     SDVals = zeros(T+1,1);
     U = U0Cllps;
     SDVals(1) = norm((eye(n) - U*U')*Ustr ,'fro');
