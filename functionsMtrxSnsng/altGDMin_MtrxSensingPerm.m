@@ -1,5 +1,9 @@
-function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,U0Cllps,r,T,Ustr,r_)
-    %---
+function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uinit,r,T,Ustr,r_,updtP)
+	% This function should implement altGDMin with both permuted and non-permuted measurements
+	% The above functionality is achieved by setting the arguments correspondingly
+	% AltGDMin wout Perm: updtP = 0, Uinit = U0, Ak_ = Ak, ykPerm_ = yk, AkCllps_ = Ak, ykCllps_ = yk
+	% AltGDMin with Perm: updtP = 1, Uinit = U0Cllps, Ak_ = Ak, ykPerm_ = ykPerm, AkCllps_ = AkCllps_, ykCllps_ = ykCllps_
+	%---
     % Algorithm
     % Init: U^(0), B^(0)
     % Steps: min P, min U, min B
@@ -9,7 +13,7 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,U0Cl
     m = size(Ak_{1}, 1);
     n = size(Ak_{1}, 2);
     SDVals = zeros(T+1,1);
-    U = U0Cllps;
+    U = Uinit;
     SDVals(1) = norm((eye(n) - U*U')*Ustr ,'fro');
     q = length(ykPerm_);
     B = zeros(r,q);
@@ -24,16 +28,18 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,U0Cl
                 B(:,k) = (Ak_{k}*U)\ykPerm_{k};
             end
             % min over P_k 
-            yHat_k = Ak_{k}*U*B(:,k);
-            for s = 1 : length(r_)
-                start = sum(r_(1:s)) - r_(s) + 1;
-                stop = sum(r_(1:s));
-                [~,idx1] = sort(yHat_k(start:stop));
-                [~,idx2] = sort(ykPerm_{k}(start:stop));
-                idx1 = start - 1 + idx1;
-                idx2 = start - 1 + idx2;
-                Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
-            end
+			if updtP 
+				yHat_k = Ak_{k}*U*B(:,k);
+				for s = 1 : length(r_)
+					start = sum(r_(1:s)) - r_(s) + 1;
+					stop = sum(r_(1:s));
+					[~,idx1] = sort(yHat_k(start:stop));
+					[~,idx2] = sort(ykPerm_{k}(start:stop));
+					idx1 = start - 1 + idx1;
+					idx2 = start - 1 + idx2;
+					Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
+				end
+			end
         end
         % U update
         X = U*B;

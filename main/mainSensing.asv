@@ -15,7 +15,7 @@ m = 100;
 numBlocks = 25;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 100;
-MC = 1;
+MC = 100;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
@@ -60,20 +60,17 @@ for mc = 1 : MC
     %U0Perm = U0Perm(:,1:r);
     %------------------------------
     %SDVals_UnPerm(mc,:) = altGDMin_MtrxSensing(Ak_, yk_, U0,r,T,Ustr);
-    updtP = 0;
-    SDVals_UnPerm(mc,:) = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r,T,Ustr,r_,updtP);
-    updtP = 1;
-    SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_,updtP);
+    SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_);
     %SDVals_Perm(mc,:) = altGDMin_MtrxSensing(Ak_, ykPerm_, U0Perm,r,T,Ustr);
     mc
 end
+SDVals_UnPerm = sum(SDVals_UnPerm,1)/MC;
+SDVals_sLcl = sum(SDVals_sLcl,1)/MC;
 %---
 plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC);
 %-----------
 function plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC)
     figure;
-    SDVals_UnPerm = sum(SDVals_UnPerm,1)/MC;
-    SDVals_sLcl = sum(SDVals_sLcl,1)/MC;
     semilogy(SDVals_sLcl, ...
         'DisplayName', 'SDVals (s-Local)', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
     hold on;
