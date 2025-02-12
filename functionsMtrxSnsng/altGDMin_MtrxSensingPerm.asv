@@ -46,23 +46,11 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
                 for s = 1 : length(r_)
                     start = sum(r_(1:s)) - r_(s) + 1;
                     stop = sum(r_(1:s));
-                    C = ykPerm_{k}(start:stop,:)*yHat_k(start:stop,:)';
-                    M = matchpairs(-C,1e10); % M is a matrix with 2 columns and m rows, 
-                                             % The second column has ascending
-                                             % indices in order 1, ..., m
-                                             % The first column has the
-                                             % corresponding/matching row indices
-                                             % 5,1 means P(5,1) = 1, i.e., 
-                                             % row 5 matched to 1
-                    idx  = M(:,1);
-                    idx = start - 1  + idx;
-                    Ak_{k}(idx,:) = Ak_{k}(start:stop,:);                   
-
-                    %[~,idx1] = sort(yHat_k(start:stop));
-                    %[~,idx2] = sort(ykPerm_{k}(start:stop));
-                    %idx1 = start - 1 + idx1;
-                    %idx2 = start - 1 + idx2;
-                    %Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
+                    [~,idx1] = sort(yHat_k(start:stop));
+                    [~,idx2] = sort(ykPerm_{k}(start:stop));
+                    idx1 = start - 1 + idx1;
+                    idx2 = start - 1 + idx2;
+                    Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
                 end
             end
         end % exit the for loop over columns 1 through q
@@ -72,15 +60,16 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
                 stop = sum(r_(1:s));
                 C = yPerm(start:stop,:)*yHat(start:stop,:)';
                 M = matchpairs(-C,1e10); % M is a matrix with 2 columns and m rows, 
-                                         % The second column has ascending
-                                         % indices in order 1, ..., m
-                                         % The first column has the
-                                         % corresponding/matching row indices
-                                         % 5,1 means P(5,1) = 1, i.e., 
-                                         % row 5 matched to 1
+                                        % The second column has ascending
+                                        % indices in order 1, ..., m
+                                        % The first column has the
+                                        % corresponding/matching row indices
+                                        % 5,1 means P(5,1) = 1, i.e., 
+                                        % row 5 matched to 1
                 idx  = M(:,1);
                 idx = start - 1  + idx;
-                Ak_{k}(idx,:) = Ak_{k}(start:stop,:);                   
+                Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
+                    
                 %M(M(:,1)) = M(:,2);
                 %temp = M(:,1);
                 %temp = start - 1 + temp;

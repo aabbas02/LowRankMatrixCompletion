@@ -59,11 +59,12 @@ for mc = 1 : MC
     %[U0Perm,~,~] = svd(MPerm,"econ");
     %U0Perm = U0Perm(:,1:r);
     %------------------------------
-    %SDVals_UnPerm(mc,:) = altGDMin_MtrxSensing(Ak_, yk_, U0,r,T,Ustr);
     updtP = 0;
-    SDVals_UnPerm(mc,:) = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r,T,Ustr,r_,updtP);
+    same = 0; 
+    SDVals_UnPerm(mc,:) = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r,T,Ustr,r_,updtP,same);
     updtP = 1;
-    SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_,updtP);
+    same = 0;
+    SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_,updtP,same);
     %SDVals_Perm(mc,:) = altGDMin_MtrxSensing(Ak_, ykPerm_, U0Perm,r,T,Ustr);
     mc
 end
