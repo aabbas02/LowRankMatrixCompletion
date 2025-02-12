@@ -12,7 +12,7 @@ r = 5;
 n = 600;
 q = 1000;
 m = 100;
-numBlocks = 25;   %effectively, m_new = numBlocks
+numBlocks = 10;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 100;
 MC = 1;
@@ -32,11 +32,18 @@ MPerm = zeros(n,q);
 SDVals_UnPerm = zeros(MC,T+1);
 SDVals_sLcl = zeros(MC,T+1);
 SDVals_Perm = zeros(MC,T+1);
+same =1;
+if same
+    pi_map = get_permutation_r(m,r_);
+end
 for mc = 1 : MC
     for k = 1 : q
         Ak_{k} = randn(m,n);
         yk_{k} = Ak_{k}*X(:,k);
-        pi_map = get_permutation_r(m,r_);
+        M(:, k)  = Ak_{k}'*yk_{k};         
+        if ~same
+            pi_map = get_permutation_r(m,r_);
+        end
         ykPerm_{k} = yk_{k}(pi_map);
         AkCllps_{k} = zeros(length(r_),n);
         ykCllps_{k} = zeros(length(r_),1);
@@ -46,7 +53,6 @@ for mc = 1 : MC
                 AkCllps_{k}(i,:) = sum(Ak_{k}(start:stop,:));
                 ykCllps_{k}(i) = sum(ykPerm_{k}(start:stop,:));
             end
-        M(:, k)  = Ak_{k}'*yk_{k}; 
         MCllps(:, k) = AkCllps_{k}'*ykCllps_{k};
         %MPerm(:, k) = Ak_{k}'*ykPerm_{k};
     end
@@ -60,10 +66,8 @@ for mc = 1 : MC
     %U0Perm = U0Perm(:,1:r);
     %------------------------------
     updtP = 0;
-    same = 0; 
     SDVals_UnPerm(mc,:) = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r,T,Ustr,r_,updtP,same);
     updtP = 1;
-    same = 0;
     SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_,updtP,same);
     %SDVals_Perm(mc,:) = altGDMin_MtrxSensing(Ak_, ykPerm_, U0Perm,r,T,Ustr);
     mc

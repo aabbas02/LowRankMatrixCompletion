@@ -18,35 +18,31 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
     q = length(ykPerm_);
     B = zeros(r,q);
     gradU = zeros(n,r);
-    if updtP && same
+    %if updtP && same
         yHat = zeros(m,q);
         yPerm = zeros(m,q);
         for k =  1 : q
-            yPerm(:,k) = ykPerm_(:,k);
+            yPerm(:,k) = ykPerm_{k};
         end
-    end
+    %end
     for i = 1 : T
         % b_k update and P_k update in for k = 1 : q loop below
         for k = 1 : q
             % Least-squares B_k update
             if i == 1 % collapsed least-squares
                 B(:,k) = (AkCllps_{k}*U)\ykCllps_{k};
-                if updtP && same == 1
-                    yHat(:,k) = AkCllps_{k}*U*B(:,k);
-                end
             else % full measurements least-squares
                 B(:,k) = (Ak_{k}*U)\ykPerm_{k};
-                if updtP && same == 1
-                    yHat(:,k) = Ak_{k}*U*B(:,k);
-                end
+            end
+            if updtP 
+                yHat(:,k) = Ak_{k}*U*B(:,k);
             end
             % min over P_k
             if updtP && same == 0
-                yHat_k = Ak_{k}*U*B(:,k);
                 for s = 1 : length(r_)
                     start = sum(r_(1:s)) - r_(s) + 1;
                     stop = sum(r_(1:s));
-                    C = ykPerm_{k}(start:stop,:)*yHat_k(start:stop,:)';
+                    C = yPerm(start:stop,k)*yHat(start:stop,k)';                    
                     M = matchpairs(-C,1e10); % M is a matrix with 2 columns and m rows, 
                                              % The second column has ascending
                                              % indices in order 1, ..., m
@@ -57,7 +53,6 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
                     idx  = M(:,1);
                     idx = start - 1  + idx;
                     Ak_{k}(idx,:) = Ak_{k}(start:stop,:);                   
-
                     %[~,idx1] = sort(yHat_k(start:stop));
                     %[~,idx2] = sort(ykPerm_{k}(start:stop));
                     %idx1 = start - 1 + idx1;
@@ -71,7 +66,7 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
                 start = sum(r_(1:s)) - r_(s) + 1;
                 stop = sum(r_(1:s));
                 C = yPerm(start:stop,:)*yHat(start:stop,:)';
-                M = matchpairs(-C,1e10); % M is a matrix with 2 columns and m rows, 
+                M = matchpairs(-C,1e100); % M is a matrix with 2 columns and m rows, 
                                          % The second column has ascending
                                          % indices in order 1, ..., m
                                          % The first column has the
@@ -80,7 +75,9 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
                                          % row 5 matched to 1
                 idx  = M(:,1);
                 idx = start - 1  + idx;
-                Ak_{k}(idx,:) = Ak_{k}(start:stop,:);                   
+                for k = 1:q
+                    Ak_{k}(idx,:) = Ak_{k}(start:stop,:);                   
+                end
                 %M(M(:,1)) = M(:,2);
                 %temp = M(:,1);
                 %temp = start - 1 + temp;
