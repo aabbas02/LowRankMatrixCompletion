@@ -12,10 +12,10 @@ r = 5;
 n = 600;
 q = 1000;
 m = 100;
-numBlocks = 10;   %effectively, m_new = numBlocks
+numBlocks = 25;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
-T = 150;
-MC = 1;
+T = 200;
+MC = 15;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
@@ -68,14 +68,15 @@ for mc = 1 : MC
     updtP = 0;
     SDVals_UnPerm(mc,:) = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r,T,Ustr,r_,updtP,same);
     updtP = 1;
+    same = 0;
     SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_,updtP,same);
     %SDVals_Perm(mc,:) = altGDMin_MtrxSensing(Ak_, ykPerm_, U0Perm,r,T,Ustr);
     mc
 end
 %---
-plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC);
+plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC,same);
 %-----------
-function plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC)
+function plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC,same)
     figure;
     SDVals_UnPerm = sum(SDVals_UnPerm,1)/MC;
     SDVals_sLcl = sum(SDVals_sLcl,1)/MC;
@@ -91,14 +92,14 @@ function plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC)
     
     
     title("n = " + n + ", q = " + q +...
-          ", r = " + r + ", m = " + m + ", num Blocks = " + numBlocks +  ", MC = " + MC,...
+          ", r = " + r + ", m = " + m + ", num Blocks = " + numBlocks +  ", MC = " + MC + ", same = " + same, ...
            'Interpreter', 'Latex', 'FontSize',14)
     
     legend('Interpreter', 'Latex', 'Fontsize', 9);
     ylabel("$SD(U,U^*)$","FontSize",14,'Interpreter','Latex')
     xlabel('Iterations (t)', 'FontSize',14, 'Interpreter','Latex')
     stringTitle = ['MtrxSnsngPerm_MC_', num2str(MC), ...
-                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_m_', num2str(m), '_numBlocks_',num2str(numBlocks)];
+                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_m_', num2str(m), '_numBlocks_',num2str(numBlocks), '_same_',num2str(same)];
     
     savefig([stringTitle, '.fig']);
 end
