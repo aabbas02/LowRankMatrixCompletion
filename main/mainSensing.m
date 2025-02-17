@@ -4,18 +4,19 @@ clear all
 dir = pwd;
 % For linux, replace '\' with '/'
 cd ..
-addpath(genpath('.\functions'));
+%addpath(genpath('.\functions'));
 addpath(genpath('.\functionsMtrxSnsng'));
+addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
 r = 5;
 n = 600;
 q = 1000;
 m = 100;
-numBlocks = 25;   %effectively, m_new = numBlocks
+numBlocks = 10;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 200;
-MC = 15;
+MC = 1;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
@@ -32,11 +33,14 @@ MPerm = zeros(n,q);
 SDVals_UnPerm = zeros(MC,T+1);
 SDVals_sLcl = zeros(MC,T+1);
 SDVals_Perm = zeros(MC,T+1);
-same =1;
-if same
-    pi_map = get_permutation_r(m,r_);
-end
+same = 1;
+%if same
+%    pi_map = get_permutation_r(m,r_);
+%end
 for mc = 1 : MC
+    if same
+        pi_map = get_permutation_r(m,r_);
+    end
     for k = 1 : q
         Ak_{k} = randn(m,n);
         yk_{k} = Ak_{k}*X(:,k);
@@ -68,49 +72,10 @@ for mc = 1 : MC
     updtP = 0;
     SDVals_UnPerm(mc,:) = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r,T,Ustr,r_,updtP,same);
     updtP = 1;
-    same = 0;
+    same = 1;
     SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_,updtP,same);
     %SDVals_Perm(mc,:) = altGDMin_MtrxSensing(Ak_, ykPerm_, U0Perm,r,T,Ustr);
     mc
 end
 %---
 plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC,same);
-%-----------
-function plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC,same)
-    figure;
-    SDVals_UnPerm = sum(SDVals_UnPerm,1)/MC;
-    SDVals_sLcl = sum(SDVals_sLcl,1)/MC;
-    semilogy(SDVals_sLcl, ...
-        'DisplayName', 'SDVals (s-Local)', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    hold on;
-    %semilogy(SDVals_Perm, ...
-    %    'DisplayName', 'SDVals (Naive)', 'LineWidth', 1.45, 'Marker', 'square', 'MarkerSize', 7);
-    %
-    semilogy(SDVals_UnPerm, ...
-        'DisplayName', 'SDVals (Unpermuted)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 7);
-    grid on
-    
-    
-    title("n = " + n + ", q = " + q +...
-          ", r = " + r + ", m = " + m + ", num Blocks = " + numBlocks +  ", MC = " + MC + ", same = " + same, ...
-           'Interpreter', 'Latex', 'FontSize',14)
-    
-    legend('Interpreter', 'Latex', 'Fontsize', 9);
-    ylabel("$SD(U,U^*)$","FontSize",14,'Interpreter','Latex')
-    xlabel('Iterations (t)', 'FontSize',14, 'Interpreter','Latex')
-    stringTitle = ['MtrxSnsngPerm_MC_', num2str(MC), ...
-                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_m_', num2str(m), '_numBlocks_',num2str(numBlocks), '_same_',num2str(same)];
-    
-    savefig([stringTitle, '.fig']);
-end
-%----------------
-function [pi_map] = get_permutation_r(n,r_)
-    pi_map = zeros(n,1);
-    for t = 1 : length(r_)
-        start  = sum(r_(1:t)) - r_(t) + 1;
-        stop   = sum(r_(1:t));
-        idx    = start:stop;
-        idx    = idx(randperm(length(idx)));
-        pi_map(start:stop) = idx;
-    end
-end
