@@ -9,14 +9,13 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-r = 5;
-n = 600;
+r = 1;
+n = 1000;
 q = 1000;
 p = 0.1;
-same = 1;
-numBlocks = 10;   %effectively, m_new = numBlocks
-r_ = ones(1,numBlocks)*(m/numBlocks);
-T = 200;
+same = 0;
+numBlocks = 25;   %effectively, m_new = numBlocks
+r_ = ones(1,numBlocks)*(n/numBlocks);
 MC = 1;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
@@ -33,25 +32,32 @@ XzerosPerm = zeros(n,q);
 XzerosCllps = zeros(n,q);
 %-----------------------
 for mc = 1 : MC
-    if same
-        pi_map = get_permutation_r(m,r_);
-    end
+    %if same
+    %    pi_map = get_permutation_r(n,r_);
+    %end
     [Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p);
     for k = 1 : q
+        l_k = length(rowIdx{k});
+        numBlocks = l_k;
+        r_ = floor(l_k/numBlocks)*ones(numBlocks,1);
+        if mod(l_k,numBlocks) > 0
+            r_(end+1) = l_k - floor(l_k/numBlocks)*numBlocks;
+        end
         if ~same
-            pi_map = get_permutation_r(m,r_);
+            pi_map = get_permutation_r(l_k,r_);
         end
         % get rowIdxPerm
         % get XcolPerm
         % make XzerosPerm
         % make XzerosCllps
         rowIdxPerm{k} = rowIdx{k}(pi_map);
-        XcolPerm{k} = Xcol{k}(rowIdxPerm{k});
-        XzerosPerm(rowIdxPerm{k},k) = XcolPerm{k};
+        %XcolPerm{k} = Xcol{k}(rowIdxPerm{k});
+        XcolPerm{k} = Xzeros(rowIdxPerm{k},k);
+        XzerosPerm(rowIdxPerm{k},k) = Xcol{k};
         for s = 1 : length(r_)
             start = sum(r_(1:s)) - r_(s) + 1;
             stop = start + r_(s) - 1;
-            XzerosCllps(start,k) = sum(XcolPerm{k}(start:stop));
+            XzerosCllps(rowIdxPerm{k}(start),k) = sum(XcolPerm{k}(start:stop));
         end
         %{
         %ykPerm_{k} = yk_{k}(pi_map);
@@ -71,6 +77,7 @@ for mc = 1 : MC
     U0 = U0(:,1:r);
     SDU0 = norm(Ustr - U0*(U0'*Ustr))
     %-----------------------------------
+    norm(Xzeros - XzerosCllps,'fro')
     [U0Cllps,~,~] = svd(XzerosCllps,"econ");
     U0Cllps = U0Cllps(:,1:r);
     SDU0Cllps = norm(Ustr - U0Cllps*(U0Cllps'*Ustr))
