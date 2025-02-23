@@ -17,10 +17,14 @@ same = 0;
 numBlocks = 25;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(n/numBlocks);
 MC = 1;
+real = 1;
+[Ustr,X] = getMovieLens(5);
+n = size(X,1);
+q = size(X,2);
 % generate rank-r X*
-Ustr = orth(randn(n,r));
-Bstr = randn(r,q);
-X  = Ustr*Bstr;
+%Ustr = orth(randn(n,r));
+%Bstr = randn(r,q);
+%X  = Ustr*Bstr;
 % generate q matrices A_k of size m x n, m << n
 %SDVals_UnPerm = zeros(MC,T+1);
 %SDVals_sLcl = zeros(MC,T+1);
@@ -35,7 +39,7 @@ for mc = 1 : MC
     %if same
     %    pi_map = get_permutation_r(n,r_);
     %end
-    [Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p);
+    [Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p,real);
     for k = 1 : q
         l_k = length(rowIdx{k});
         numBlocks = l_k;
@@ -87,12 +91,16 @@ for mc = 1 : MC
     SDU0Perm = norm(Ustr - U0Perm*(U0Perm'*Ustr))    
     mc
 end
-function [Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p)
+function [Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p,real)
     % Randomly select indices based on probability p
-    idx = randperm(n * q);
-    idx = idx(1:round(p * n * q));
-    idxC = setdiff(1:n * q, idx);
-
+    if real
+        idx = find(X > 0);
+    else
+        idx = randperm(n * q);
+        idx = idx(1:round(p * n * q));
+        idxC = setdiff(1:n * q, idx);
+    end
+    
     % Convert linear indices to subscripts
     [row, col] = ind2sub([n, q], idx);
 
@@ -146,4 +154,17 @@ function plotRsltsLRMCInit(numBlocks_, SDVals_,n,q,r,m,MC,same)
                    '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_m_', num2str(m), '_numBlocks_',num2str(numBlocks), '_same_',num2str(same)];
     
     savefig([stringTitle, '.fig']);
+end
+function [Ustr,X] = getMovieLens(r)
+    A = readmatrix("ratings.xlsx");
+    n = max(A(:,1));
+    q = max(A(:,2));
+    X = zeros(n,q);
+    for k = 1 : size(A,1)
+        i = A(k,1);
+        j = A(k,2);
+        X(i,j) = A(k,3);
+    end
+    [Ustr,~,~] = svd(X,"econ");
+    Ustr = Ustr(:,1:r);
 end

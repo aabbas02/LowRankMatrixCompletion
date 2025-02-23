@@ -9,19 +9,19 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-r = 2;
-n = 600;
+r = 1;
+n = 1000;
 q = 1000;
 p = 0.1;
 same = 0;
 numBlocks = 25;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(n/numBlocks);
-T = 200;
 MC = 1;
+Ustr,X = getMovieLens();
 % generate rank-r X*
-Ustr = orth(randn(n,r));
-Bstr = randn(r,q);
-X  = Ustr*Bstr;
+%Ustr = orth(randn(n,r));
+%Bstr = randn(r,q);
+%X  = Ustr*Bstr;
 % generate q matrices A_k of size m x n, m << n
 %SDVals_UnPerm = zeros(MC,T+1);
 %SDVals_sLcl = zeros(MC,T+1);
@@ -39,6 +39,7 @@ for mc = 1 : MC
     [Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p);
     for k = 1 : q
         l_k = length(rowIdx{k});
+        numBlocks = l_k;
         r_ = floor(l_k/numBlocks)*ones(numBlocks,1);
         if mod(l_k,numBlocks) > 0
             r_(end+1) = l_k - floor(l_k/numBlocks)*numBlocks;
@@ -57,12 +58,6 @@ for mc = 1 : MC
         for s = 1 : length(r_)
             start = sum(r_(1:s)) - r_(s) + 1;
             stop = start + r_(s) - 1;
-            % This is wrong. 
-            % The start and stop are with respect to column vector of 
-            % length equal to number of observed entries.
-            % The column of XzerosCllps has n entries, not length equal to
-            % number of observed entries.
-            %k,s
             XzerosCllps(rowIdxPerm{k}(start),k) = sum(XcolPerm{k}(start:stop));
         end
         %{
@@ -152,4 +147,18 @@ function plotRsltsLRMCInit(numBlocks_, SDVals_,n,q,r,m,MC,same)
                    '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_m_', num2str(m), '_numBlocks_',num2str(numBlocks), '_same_',num2str(same)];
     
     savefig([stringTitle, '.fig']);
+end
+function getMovieLens()
+    A = read_matrix("ratings.xlsx");
+    n = max(A(:,1));
+    q = max(A(:,2));
+    X = zeros(n,q);
+    for k = 1 : size(A,1)
+        i = A(k,1);
+        j = A(k,2);
+        X(i,j) = A(k,3);
+    end
+    Ustr = svd(X,"econ");
+    Ustr = U(:,1:r);
+    
 end
