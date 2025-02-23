@@ -16,6 +16,7 @@ same = 0;
 r_ = ones(1,numBlocks)*(n/numBlocks);
 MC = 1;
 real = 1;
+%------------------------
 [Ustr,X] = getMovieLens(5);
 n = size(X,1);
 q = size(X,2);
@@ -23,13 +24,9 @@ q = size(X,2);
 %Ustr = orth(randn(n,r));
 %Bstr = randn(r,q);
 %X  = Ustr*Bstr;
-% generate q matrices A_k of size m x n, m << n
-%SDVals_UnPerm = zeros(MC,T+1);
-%SDVals_sLcl = zeros(MC,T+1);
-%SDVals_Perm = zeros(MC,T+1);
+%----------------------------------------
 %numBlocksTry_ = [10,20,30,40,50,60,70,80,90,100];
 numBlocksTry_ = [100,120,140,160,180,200]/2;
-MC = 5;
 % generate rank-r X*
 %Ustr = orth(randi(1000,[n,r]));
 %Bstr = randn(r,q);
@@ -85,31 +82,10 @@ for i = 1 : length(numBlocksTry_)
                 end
                 %AkCllps_{k}(s,start:stop) = ones(1,r_(s));
             end
-            %XzerosCllps_(:,k) = AkCllps_{k}*XcolPerm{k};
-            %MCllpsSpctrl(:,k) = AkCllps_{k}'*XzerosCllps_(:,k);
-            %
-            %{
-            %ykPerm_{k} = yk_{k}(pi_map);
-            %AkCllps_{k} = zeros(length(r_),n);
-            %ykCllps_{k} = zeros(length(r_),1);
-            %    for i = 1 : length(r_)
-            %        start = sum(r_(1:i)) - r_(i) + 1;
-            %        stop  = sum(r_(1:i));
-            %        AkCllps_{k}(i,:) = sum(Ak_{k}(start:stop,:));
-            %        ykCllps_{k}(i) = sum(ykPerm_{k}(start:stop,:));
-            %    end
-            %MCllps(:, k) = AkCllps_{k}'*ykCllps_{k};
-            %MPerm(:, k) = Ak_{k}'*ykPerm_{k};
-            %}
         end
         [U0,~,~,] = svd(Xzeros,"econ");
         U0 = U0(:,1:r);
         SDU0(i,mc) = norm(Ustr - U0*(U0'*Ustr));
-        %{
-        %[U0CllpsSpctrl,~,~,] = svd(MCllpsSpctrl,"econ");
-        %U0CllpsSpctrl = U0CllpsSpctrl(:,1:r);
-        %SDU0CllpsSpctrl = norm(Ustr - U0CllpsSpctrl*(U0CllpsSpctrl'*Ustr))
-        %}
         %-----------------------------------
         %norm(Xzeros - XzerosCllps,'fro')
         [U0Cllps,~,~] = svd(XzerosCllps,"econ");
