@@ -8,7 +8,7 @@ cd ..
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-r = 10;
+r = 15;
 n = 1000;
 q = 1000;
 same = 0;
@@ -16,6 +16,10 @@ MC = 1;
 %------------------------
 real = 1;
 [Ustr,X,p] = getMovieLens(r);
+
+%n = 5000;
+%q = 5000;
+%X = X(1:n,1:q);
 n = size(X,1);
 q = size(X,2);
 %-------------------------------
@@ -24,7 +28,8 @@ q = size(X,2);
 %X  = Ustr*Bstr;
 %----------------------------------------
 %numBlocksTry_ = 5:10:200;
-numBlocksTry_ = [200,300];
+numBlocksTry_ = [50,100,150,200,250,300];
+
 %numBlocksTry_ = [200, 220, 240, 260, 280, 300];
 %numBlocksTry_ = [20,40,60,80,100,120,140,160,180,200];
 %numBlocksTry_ = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,80,90,100,110,120,130,140,150];
@@ -39,17 +44,17 @@ fill = "mean";
 %fill = "both";
 %------------------------
 %-----------------------
+[Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p,real);
 for i = 1 : length(numBlocksTry_)
     numBlocksTry = numBlocksTry_(i);
     for mc = 1 : MC
         rowIdxPerm = cell(q,1);
         XcolPerm = cell(q, 1); 
-        XzerosPerm = sparse(n,q);
-        XzerosCllps = sparse(n,q);
+        XzerosPerm = zeros(n,q);
+        XzerosCllps = zeros(n,q);
         %if same
         %    pi_map = get_permutation_r(n,r_);
         %end
-        [Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p,real);
         for k = 1 : q
             l_k = length(rowIdx{k});
             numBlocks = min(numBlocksTry,l_k);
@@ -146,15 +151,14 @@ function [Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p,real)
     colIdx = cell(n, 1);
     Xcol = cell(q, 1); 
     Xrow = cell(n, 1);
-
     % Parallel processing
     parfor j = 1:q
         rowIdx{j} = row(col == j);
         Xcol{j} = X(rowIdx{j}, j);
-        if j <= n
-            colIdx{j} = col(row == j);
-            Xrow{j} = X(j, colIdx{j})';
-        end
+    end
+    parfor j = 1:n
+        colIdx{j} = col(row == j);
+        Xrow{j} = X(j, colIdx{j})';        
     end
 end
 %---
@@ -165,7 +169,7 @@ function [Ustr,X,p] = getMovieLens(r)
     load("ratings10M.mat")
     n = max(A(:,1));
     q = max(A(:,2));
-    X = sparse(n,q);
+    X = zeros(n,q);
     num = 0;
     disp(num)
     for k = 1 : size(A,1)
@@ -173,13 +177,13 @@ function [Ustr,X,p] = getMovieLens(r)
         j = A(k,2);
         X(i,j) = A(k,3);
         num = num + 1;
-        if mod(k,10000) == 0
-            size(A,1),k
-        end
+        %if mod(k,100000) == 0
+        %    size(A,1),k
+        %end
     end
     p = num/(n*q);
-    X = X';
+    %X = X';
+    X = X(1:20000,1:20000);
     [Ustr,~,~] = svds(X,r);
     Ustr = Ustr(:,1:r);
-    1
 end
