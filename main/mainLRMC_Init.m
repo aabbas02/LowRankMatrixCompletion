@@ -8,43 +8,35 @@ cd ..
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-r = 15;
+r = 5;
+real = 1;
 n = 1000;
 q = 1000;
+p = 0.01;
 same = 0;
-MC = 1;
+MC = 25;
 %------------------------
-real = 1;
-[Ustr,X,p] = getMovieLens(r);
-
-%n = 5000;
-%q = 5000;
-%X = X(1:n,1:q);
-n = size(X,1);
-q = size(X,2);
+if real
+    [Ustr,X,p] = getMovieLens(r);
+    n = size(X,1);
+    q = size(X,2);
+    MC = 1;
+else
+    % generate rank-r X*
+    Ustr = orth(randi(1000,[n,r]));
+    Bstr = randn(r,q);
+    X  = Ustr*Bstr;
+end
 %-------------------------------
-%Ustr = orth(randn(n,r));
-%Bstr = randn(r,q);
-%X  = Ustr*Bstr;
-%----------------------------------------
-%numBlocksTry_ = 5:10:200;
-numBlocksTry_ = [50,100,150,200,250,300];
-
-%numBlocksTry_ = [200, 220, 240, 260, 280, 300];
-%numBlocksTry_ = [20,40,60,80,100,120,140,160,180,200];
-%numBlocksTry_ = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,80,90,100,110,120,130,140,150];
-% generate rank-r X*
-%Ustr = orth(randi(1000,[n,r]));
-%Bstr = randn(r,q);
-%X  = Ustr*Bstr;
-SDU0 = zeros(length(numBlocksTry_),MC);
-SDU0Cllps = zeros(length(numBlocksTry_),MC);
-SDU0Perm = zeros(length(numBlocksTry_),MC);
+%numBlocksTry_ = [5,10,15,20];
+numBlocksTry_ = 5:5:100;
+SDU0 = zeros(length(numBlocksTry_),MC); SDU0Cllps = zeros(length(numBlocksTry_),MC); SDU0Perm = zeros(length(numBlocksTry_),MC);
+X0Err = zeros(length(numBlocksTry_),MC); X0CllpsErr = zeros(length(numBlocksTry_),MC);  X0PermErr = zeros(length(numBlocksTry_),MC); 
 fill = "mean";
 %fill = "both";
 %------------------------
 %-----------------------
-[Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p,real);
+[Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real);
 for i = 1 : length(numBlocksTry_)
     numBlocksTry = numBlocksTry_(i);
     for mc = 1 : MC
@@ -68,7 +60,6 @@ for i = 1 : length(numBlocksTry_)
             rowIdxPerm{k} = rowIdx{k}(pi_map);
             XcolPerm{k} = Xzeros(rowIdxPerm{k},k);
             XzerosPerm(rowIdxPerm{k},k) = Xcol{k};
-            %AkCllps_{k} = zeros(numBlocks,n);
             for s = 1 : numBlocks
                 start = sum(r_(1:s)) - r_(s) + 1;
                 stop = start + r_(s) - 1;
@@ -80,20 +71,24 @@ for i = 1 : length(numBlocksTry_)
                     XzerosCllps(rowIdxPerm{k}(start:stop),k) = sum(XcolPerm{k}(start:stop))/r_(s);
                     XzerosCllps(rowIdxPerm{k}(floor(start +(stop-start)/2):stop),k) = median(XcolPerm{k}(start:stop));
                 end
-                %AkCllps_{k}(s,start:stop) = ones(1,r_(s));
             end
         end
-        %[U0,~,~,] = svds(Xzeros,r);
-        %U0 = U0(:,1:r);
-        %SDU0(i,mc) = norm(Ustr - U0*(U0'*Ustr));
+        [U0, S0, V0] = svds(Xzeros,r);
+        U0 = U0(:,1:r); S0 = S0(1:r,1:r); V0 = V0(:,1:r);
+        X0 = U0*S0*V0';
+        X0Err(i,mc) = norm(X0(idx) - Xzeros(idx))/norm(Xzeros(idx));
+        SDU0(i,mc) = norm(Ustr - U0*(U0'*Ustr));
         %-----------------------------------
-        %norm(Xzeros - XzerosCllps,'fro')
-        [U0Cllps,~,~] = svds(XzerosCllps,r);
-        U0Cllps = U0Cllps(:,1:r);
+        [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);
+        U0Cllps = U0Cllps(:,1:r); S0Cllps = S0Cllps(1:r,1:r); V0Cllps = V0Cllps(:,1:r);
+        X0Cllps = U0Cllps*S0Cllps*V0Cllps';
+        X0CllpsErr(i,mc) = norm(X0Cllps(idx) - Xzeros(idx))/norm(Xzeros(idx));
         SDU0Cllps(i,mc) = norm(Ustr - U0Cllps*(U0Cllps'*Ustr));
         %---------------------------------------
-        [U0Perm,~,~] = svds(XzerosPerm,r);
-        U0Perm = U0Perm(:,1:r);
+        [U0Perm, S0Perm, V0Perm] = svds(XzerosPerm,r);
+        U0Perm = U0Perm(:,1:r); S0Perm = S0Perm(1:r,1:r); V0Perm = V0Perm(:,1:r);
+        X0Perm = U0Perm*S0Perm*V0Perm';        
+        X0PermErr(i,mc) = norm(X0Perm(idx) - Xzeros(idx))/norm(Xzeros(idx));
         SDU0Perm(i,mc) = norm(Ustr - U0Perm*(U0Perm'*Ustr));    
         mc
     end
@@ -101,16 +96,17 @@ end
 SDU0 = sum(SDU0,2)/MC;
 SDU0Cllps = sum(SDU0Cllps,2)/MC;
 SDU0Perm = sum(SDU0Perm,2)/MC;
-%disp(C)
-plotRslts(SDU0, SDU0Cllps, SDU0Perm,n,q,r,p,numBlocksTry_,MC,same,fill);
+plotRslts(SDU0, SDU0Cllps, SDU0Perm,n,q,r,p,numBlocksTry_,MC,same,fill,real);
 
-function plotRslts(SDU0, SDU0Cllps, SDU0Perm,n,q,r,p,numBlocks_,MC,same,fill)
+function plotRslts(SDU0, SDU0Cllps, SDU0Perm,n,q,r,p,numBlocks_,MC,same,fill,real)
     figure;
-    %plot(numBlocks_,SDU0, ...
-    %    'DisplayName', 'SDVals U^{(0)}', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
+    hold on
+    if real == 0
+    plot(numBlocks_,SDU0, ...
+        'DisplayName', 'SDVals Unperm', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
+    end
     plot(numBlocks_,SDU0Cllps, ...
         'DisplayName', 'SDVals Cllps', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    hold on
     plot(numBlocks_,SDU0Perm, ...
         'DisplayName', 'SDVals Naive', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
     grid("on")
@@ -121,15 +117,19 @@ function plotRslts(SDU0, SDU0Cllps, SDU0Perm,n,q,r,p,numBlocks_,MC,same,fill)
            'Interpreter', 'Latex', 'FontSize',11)
     %--------------------------------
     legend('Interpreter', 'Latex', 'Fontsize', 9);
-    %ylabel("$SD(U^{(0)},U^*)$","FontSize",14,'Interpreter','Latex')
-    ylabel("Initialization Error", "FontSize",11,"Interpreter","Latex")
+    if real == 0
+        ylabel("$SD(U^{(0)},U^*)$","FontSize",14,'Interpreter','Latex')
+    else
+        ylabel("Initialization Error", "FontSize",11,"Interpreter","Latex")
+    end
     xlabel('number of blocks', 'FontSize',14, 'Interpreter','Latex')
     stringTitle = ['LRMC_Init_MC_', num2str(MC), ...
                    '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_p_', num2str(p),'_numBlocks_', num2str(max(numBlocks_)), '_same_',num2str(same),'_fill_',num2str(fill)];
     
     savefig([stringTitle, '.fig']);
 end
-function [Xzeros, rowIdx, colIdx, Xcol, Xrow] = processMatrix(X, n, q, p,real)
+%---
+function [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real)
     % Randomly select indices based on probability p
     if real
         idx = find(X > 0);
@@ -164,8 +164,9 @@ end
 %---
 function [Ustr,X,p] = getMovieLens(r)
     %A = readmatrix("ratings.xlsx");
+    %--------------------
     %load("ratings1M.mat");
-    %A = ratings1M;
+    %--------------------
     load("ratings10M.mat")
     n = max(A(:,1));
     q = max(A(:,2));
@@ -183,7 +184,7 @@ function [Ustr,X,p] = getMovieLens(r)
     end
     p = num/(n*q);
     %X = X';
-    X = X(1:20000,1:20000);
+    %X = X(1:20000,1:20000);
     [Ustr,~,~] = svds(X,r);
     Ustr = Ustr(:,1:r);
 end
