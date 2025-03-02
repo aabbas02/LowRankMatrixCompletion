@@ -9,14 +9,16 @@ addpath(genpath('.\utils'));
 cd(dir)    
 tic
 %---------------------------------
+%THIS CODE DOES NOT WORK FOR REAL = 0  case because processMatrix resamples
+% idx when it is called
 r = 2;
 real = 0;
-T = 75;
+T = 5000;
 n = 1000;
 q = 1000;
-p = 0.5;
+p = 0.3;
 same = 0;
-MC = 5;
+MC = 1;
 %------------------------
 if real
     [Ustr,X,p] = getMovieLens(r);
@@ -29,12 +31,12 @@ else
     Bstr = randn(r,q);
     X  = Ustr*Bstr;
 end
-numBlocksTry_ = 10:10:100;
+numBlocksTry_ = 100;
 %-------------------------------
 SDU0 = zeros(length(numBlocksTry_),MC);
 SDU0_ = zeros(length(numBlocksTry_),MC);
 SDU0Cllps = zeros(length(numBlocksTry_),MC); 
-SDU0Cllps_ = zeros(length(numBlocksTry_),MC); 
+SDU0Cllps_ = zeros(length(numBlocksTry_),MC);
 SDU0Perm = zeros(length(numBlocksTry_),MC);
 SDU0Perm_ = zeros(length(numBlocksTry_),MC);
 X0Err = zeros(length(numBlocksTry_),MC);
@@ -58,54 +60,23 @@ for i = 1 : length(numBlocksTry_)
             idxFlag = 1;
             [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real,idxFlag,0);    
         end
-        % U0 from unpermuted
-        [U0, S0, V0] = svds(Xzeros,r);
-        U0 = U0(:,1:r); S0 = S0(1:r,1:r); V0 = V0(:,1:r);
-        X0 = U0*S0*V0';
-        X0Err(i,mc) = norm(X0(idx) - Xzeros(idx))/norm(Xzeros(idx));
-        % U0 from unpermuted plus iterations
-        Pupdt = 0;
-        [SDVals,Errs] = altMinCntrlNew(n,q, r, U0, Ustr, T, rowIdx, Xcol, colIdx, Xrow, X0,idx,Xzeros,real,Pupdt);
-        SDU0_(i,mc) = SDVals(end);        
-        X0Err_(i,mc) = Errs(end);  
-        if real
-            Ustr = U0;
-        end
-        SDU0(i,mc) = norm(Ustr - U0*(U0'*Ustr));
-        % get permuted and collapsed matrices -- used below
-        [XzerosPerm, XzerosCllps] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill);    
-        %------------------------------------
-        % ----------- U0 from cllps
-        [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);
-        U0Cllps = U0Cllps(:,1:r); S0Cllps = S0Cllps(1:r,1:r); V0Cllps = V0Cllps(:,1:r);
-        X0Cllps = U0Cllps*S0Cllps*V0Cllps';
-        X0CllpsErr(i,mc) = norm(X0Cllps(idx) - Xzeros(idx))/norm(Xzeros(idx));
-        %SDU0Cllps(i,mc) = norm(Ustr - U0Cllps*(U0Cllps'*Ustr));
-        % U0 from cllps matrix plus iterations
-        idxFlag = 0;
-        Pupdt = 0;
+        [~, XzerosCllps] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill);  
         [XzerosCllps, rowIdxCllps, colIdxCllps, XcolCllps, XrowCllps,~] = processMatrix(XzerosCllps, n, q, p,real,idxFlag,idx);
-        [SDVals,Errs] = altMinCntrlNew(n,q, r, U0Cllps, Ustr, T, ...
-                                       rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
-                                       X0Cllps,idx,Xzeros,real,Pupdt);
-        SDU0Cllps_(i,mc) = SDVals(end);
-        X0CllpsErr_(i,mc) = Errs(end);
-        % ------------ U0 from permuted matrix
-        [U0Perm, S0Perm, V0Perm] = svds(XzerosPerm,r);
-        U0Perm = U0Perm(:,1:r); S0Perm = S0Perm(1:r,1:r); V0Perm = V0Perm(:,1:r);
-        X0Perm = U0Perm*S0Perm*V0Perm';        
-        X0PermErr(i,mc) = norm(X0Perm(idx) - Xzeros(idx))/norm(Xzeros(idx));
-        %SDU0Perm(i,mc) = norm(Ustr - U0Perm*(U0Perm'*Ustr));    
-        % U0 from permuted matrix plus iterations        
-        idxFlag = 0;
+        [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);        
         Pupdt = 0;
-        [XzerosPerm, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);        
-        [SDVals,Errs] = altMinCntrlNew(n,q, r, U0Cllps, Ustr, T, ...
-                                       rowIdxPerm, XcolPerm, colIdxPerm, XrowPerm, ...
-                                       X0Perm,idx,Xzeros,real,Pupdt);
-        SDU0Perm_(i,mc) = SDVals(end);
-        X0PermErr_(i,mc) = Errs(end);
+        Tinit = 5;
+        [SDVals,~,U_init,B_init] = altMinCntrlNew(n,q, r, U0Cllps, Ustr, Tinit, ...
+                                       rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
+                                       U0Cllps*S0Cllps*V0Cllps',idx,XzerosCllps,real,Pupdt);
         
+        %B_init = zeros(r,q);
+        %for j =  1 : q
+        %    B_init(:,j) = U0Cllps(rowIdxCllps{j},:)\XcolCllps{j};       
+        %end
+        X_init = U_init*B_init;
+        [SDVals,Errs] = altGDMinWithP_LRMC(n,q, r,p, U_init, Ustr, T, ...
+                                    rowIdxPerm, XcolPerm, colIdxPerm, XrowPerm, ...
+                                    X_init,idx,XzerosPerm,real,B_init);        
         mc
     end
 end
@@ -124,7 +95,7 @@ X0Err_'
 X0CllpsErr_'
 X0PermErr_'
 if real == 0
-    plotRslts(SDU0_, 0, SDU0Cllps_, SDU0Perm_,n,q,r,p,numBlocksTry_,MC,same,fill,real,T);
+    plotRslts(SDU0_, SDU0Cllps, SDU0Cllps_, SDU0Perm_,n,q,r,p,numBlocksTry_,MC,same,fill,real,T);
 end
 n,q
 toc
