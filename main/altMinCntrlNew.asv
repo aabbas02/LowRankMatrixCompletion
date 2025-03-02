@@ -4,7 +4,7 @@ function [SDVals,objVals] = altMinCntrlNew(n,q,r,Uinit, ...
     U = Uinit;
     if real == 0
         SDVals = zeros(T+1,1);
-        SDVals(1) = norm(Ustr - U*(U'*Ustr));
+        SDVals(1) = norm(Ustr - U*(U'*Ustr) );
     end
     %[U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);
     %U0Cllps = U0Cllps(:,1:r); S0Cllps = S0Cllps(1:r,1:r); V0Cllps = V0Cllps(:,1:r);
@@ -15,11 +15,7 @@ function [SDVals,objVals] = altMinCntrlNew(n,q,r,Uinit, ...
     for i = 1 : T
         % V update
         for j = 1 : q
-            % P - update
-            %Xcol_ = sort( Xcol{j} );
-            %[~,idxSort] = sort( U(rowIdx{j},:)*V(:,j) );
-            %V(:,j) = U(rowIdx{j}(idxSort),:)\Xcol_{j};
-            %V(:,j) = U(rowIdx{j},:)\Xcol{j};
+            V(:,j) = U(rowIdx{j},:)\Xcol{j};
         end
         % U update 
         for j = 1 : n
@@ -27,7 +23,7 @@ function [SDVals,objVals] = altMinCntrlNew(n,q,r,Uinit, ...
         end
         if real == 0
             [Uproj,~,~] = qr(U,'econ');
-            SDVals(i + 1) = norm(Ustr - Uproj*(Uproj'*Ustr));  
+            SDVals(i + 1) = norm( (eye(n) - Uproj*Uproj')*Ustr);  
         end
         Xhat = U*V;
         objVals(i+1) = norm(Xzeros(idx) - Xhat(idx))/norm(Xzeros(idx));
