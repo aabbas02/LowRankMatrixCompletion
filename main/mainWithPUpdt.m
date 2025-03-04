@@ -9,16 +9,14 @@ addpath(genpath('.\utils'));
 cd(dir)    
 tic
 %---------------------------------
-%THIS CODE DOES NOT WORK FOR REAL = 0  case because processMatrix resamples
-% idx when it is called
-r = 2;
+r = 5;
 real = 0;
-T = 5000;
+T = 300;
 n = 1000;
 q = 1000;
-p = 0.1;
+p = 0.05;
 same = 0;
-MC = 1;
+MC = 75;
 %------------------------
 if real
     [Ustr,X,p] = getMovieLens(r);
@@ -31,20 +29,9 @@ else
     Bstr = randn(r,q);
     X  = Ustr*Bstr;
 end
-numBlocksTry_ = 50;
+numBlocksTry_ = [20];
+SDValsAltGDMin = zeros(MC,T+1);
 %-------------------------------
-SDU0 = zeros(length(numBlocksTry_),MC);
-SDU0_ = zeros(length(numBlocksTry_),MC);
-SDU0Cllps = zeros(length(numBlocksTry_),MC); 
-SDU0Cllps_ = zeros(length(numBlocksTry_),MC);
-SDU0Perm = zeros(length(numBlocksTry_),MC);
-SDU0Perm_ = zeros(length(numBlocksTry_),MC);
-X0Err = zeros(length(numBlocksTry_),MC);
-X0Err_ = zeros(length(numBlocksTry_),MC);
-X0CllpsErr = zeros(length(numBlocksTry_),MC);
-X0CllpsErr_ = zeros(length(numBlocksTry_),MC);
-X0PermErr = zeros(length(numBlocksTry_),MC); 
-X0PermErr_ = zeros(length(numBlocksTry_),MC);
 fill = "mean";
 %fill = "median";
 %fill = "both";
@@ -60,13 +47,13 @@ for i = 1 : length(numBlocksTry_)
             idxFlag = 1;
             [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real,idxFlag,0);    
         end
-        [XzerosPerm, XzerosCllps] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill);  
+        [XzerosPerm, XzerosCllps,r_] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill);  
         idxFlag = 0;
         [XzerosCllps, rowIdxCllps, colIdxCllps, XcolCllps, XrowCllps,~] = processMatrix(XzerosCllps, n, q, p,real,idxFlag,idx);
         [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);        
         Pupdt = 0;
-        Tinit = 25;
-        [SDVals,~,U_init,B_init] = altMinCntrlNew(n,q, r, U0Cllps, Ustr, Tinit, ...
+        Tinit = 0;
+        [SDVals,~,U_init,B_init] = altMinInit(n,q, r, U0Cllps, Ustr, Tinit, ...
                                        rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
                                        U0Cllps*S0Cllps*V0Cllps',idx,XzerosCllps,real,Pupdt);
         SDVals
@@ -77,37 +64,23 @@ for i = 1 : length(numBlocksTry_)
         %end
         X_init = U_init*B_init;
         [~, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);
-        [SDVals,Errs] = altGDMinWithP_LRMC(n,q, r,p, U_init, Ustr, T, ...
+        [SDValsAltGDMin(mc,:),Errs] = altGDMinWithP_LRMC(n,q, r,r_,p, U_init, Ustr, T, ...
                                     rowIdxPerm, XcolPerm, colIdxPerm, XrowPerm, ...
                                     X_init,idx,XzerosPerm,real,B_init);        
         mc
     end
 end
-SDU0 = sum(SDU0,2)/MC;
-SDU0_ = sum(SDU0_,2)/MC;
-SDU0Cllps = sum(SDU0Cllps,2)/MC;
-SDU0Cllps_ = sum(SDU0Cllps_,2)/MC;
-SDU0Perm = sum(SDU0Perm,2)/MC;
-SDU0Perm_ = sum(SDU0Perm_,2)/MC;
-%---
-SDU0_'
-SDU0Cllps_'
-SDU0Perm_'
-
-X0Err_'
-X0CllpsErr_'
-X0PermErr_'
+SDValsAltGDMin = sum(SDValsAltGDMin,1)/MC;
 if real == 0
-    plotRslts(SDU0_, SDU0Cllps, SDU0Cllps_, SDU0Perm_,n,q,r,p,numBlocksTry_,MC,same,fill,real,T);
+    plotRslts(SDValsAltGDMin,n,q,r,p,numBlocksTry_(1),MC,same,fill,real,T);
 end
-n,q
-toc
-function [XzerosPerm, XzerosCllps] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill)
+
+function [XzerosPerm, XzerosCllps,r_cell] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill)
     % Initialize output variables
     XzerosPerm = Xzeros;
     rowIdxPerm = cell(q,1);
     XcolPerm = cell(q, 1); 
-
+    r_cell = cell(q,1);
     XzerosCllps = Xzeros;
     for k = 1 : q
 
@@ -118,7 +91,7 @@ function [XzerosPerm, XzerosCllps] = processBlocks(rowIdx, Xcol, Xzeros, q, numB
         if mod(l_k, numBlocks) > 0
             r_(end) = r_(end) + l_k - floor(l_k / numBlocks) * numBlocks;
         end
-        
+        r_cell{k} = r_;
         if ~same
             pi_map = get_permutation_r(l_k, r_);
         else
@@ -146,35 +119,34 @@ function [XzerosPerm, XzerosCllps] = processBlocks(rowIdx, Xcol, Xzeros, q, numB
 end
 
 
-function plotRslts(SDU0, SDU0Cllps, SDU0Cllps_, SDU0Perm,n,q,r,p,numBlocks_,MC,same,fill,real,T)
+function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T)
     figure;
-    hold on
-    if real == 0
-    plot(numBlocks_,SDU0, ...
-        'DisplayName', 'SDVals Unperm', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    end
+    %hold on
+    %if real == 0
+    %plot(numBlocks_,SDU0, ...
+    %    'DisplayName', 'SDVals Unperm', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
+    %end
     %plot(numBlocks_,SDU0Cllps, ...
     %    'DisplayName', 'SDVals Cllps', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    plot(numBlocks_,SDU0Cllps_, ...
-        'DisplayName', 'SDVals Cllps Mean Only', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    plot(numBlocks_,SDU0Perm, ...
-        'DisplayName', 'SDVals Naive', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
+    %plot(numBlocks_,SDU0Cllps_, ...
+    %    'DisplayName', 'SDVals Cllps Mean Only', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
+    semilogy(SDAltGDMin, ...
+        'DisplayName', 'SDVals AltMin', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
     grid("on")
-    xticks(numBlocks_);
     %-------------------------------
     title("LRMC. n = " + n + ", q = " + q +...
-          ", r = " + r + ", p = " + p  +  ", MC = " + MC + ", same = " + same + ", fill = " + fill + ", T = " + T,...
-           'Interpreter', 'Latex', 'FontSize',11)
+          ", r = " + r + ", p = " + p  +  ", MC = " + MC + ", same = " + same + ", fill = " + fill + ", T = " + T + ", num Blocks = " + numBlocks,...
+          'Interpreter', 'Latex', 'FontSize',11);
     %--------------------------------
     legend('Interpreter', 'Latex', 'Fontsize', 9);
     if real == 0
-        ylabel("$SD(U^{(T)},U^*)$","FontSize",14,'Interpreter','Latex')
+        ylabel("$SD(U^{(t)},U^*)$","FontSize",14,'Interpreter','Latex')
     else
         ylabel("Initialization Error", "FontSize",11,"Interpreter","Latex")
     end
-    xlabel('number of blocks', 'FontSize',14, 'Interpreter','Latex')
-    stringTitle = ['LRMC_Init_MC_', num2str(MC), ...
-                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_p_', num2str(p),'_numBlocks_', num2str(max(numBlocks_)), '_same_',num2str(same),'_fill_',num2str(fill), '_T_',num2str(T)];
+    xlabel('Iterations t', 'FontSize',14, 'Interpreter','Latex')
+    stringTitle = ['AltMinbyGD', num2str(MC), ...
+                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_p_', num2str(p),'_numBlocks_', num2str((numBlocks)), '_same_',num2str(same),'_fill_',num2str(fill), '_T_',num2str(T)];
     
     savefig([stringTitle, '.fig']);
 end

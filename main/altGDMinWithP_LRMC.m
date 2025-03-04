@@ -1,4 +1,4 @@
-function [SDVals,objVals] = altGDMinWithP_LRMC(n,q,r,p,Uinit, ...
+function [SDVals,objVals] = altGDMinWithP_LRMC(n,q,r,r_,p,Uinit, ...
                                         Ustr,T, ...
                                         rowIdx,Xcol,colIdx,Xrow, Xhat0,idx,Xzeros,real,B_init)
     % Given U^{(0)}, B^{(0)}
@@ -25,27 +25,41 @@ function [SDVals,objVals] = altGDMinWithP_LRMC(n,q,r,p,Uinit, ...
         % P update
         for j = 1 : q
             xHat = U(rowIdx{j},:)*V(:,j);
-            [~,idx1] = sort(xHat);
-            [~,idx2] = sort(Xcol{j}); % makre sure this does not do an in-place sort
-            rowIdx{j}(idx2) = rowIdx{j}(idx1);
+            %[~,idx1] = sort(xHat);
+            %[~,idx2] = sort(Xcol{j}); % makre sure this does not do an in-place sort
+            %rowIdx{j}(idx2) = rowIdx{j}(idx1);
+            for s = 1 : length(r_{j})
+                start = sum(r_{j}(1:s)) - r_{j}(s) + 1;
+                stop = sum(r_{j}(1:s));           
+                [~,idx1] = sort(xHat(start:stop));
+                [~,idx2] = sort(Xcol{j}(start:stop));
+                idx1 = start - 1 + idx1;
+                idx2 = start - 1 + idx2;
+                rowIdx{j}(idx2) = rowIdx{j}(idx1);
+                %Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
+            end
+
         end
         % V update
         for j = 1 : q
             V(:,j) = U(rowIdx{j},:)\Xcol{j};
         end
         % U update
-        gradU = 0*gradU;
-        for j = 1 : q
-            gradU(rowIdx{j},:) = gradU(rowIdx{j},:) + (U(rowIdx{j},:)*V(:,j) - Xcol{j})*V(:,j)';
+        for T_in = 1:100
+            gradU = 0*gradU;
+            for j = 1 : q
+                gradU(rowIdx{j},:) = gradU(rowIdx{j},:) + (U(rowIdx{j},:)*V(:,j) - Xcol{j})*V(:,j)';
+            end
+            U = U - eta*gradU;
         end
-        U = U - eta*gradU;
         if real == 0
             [Uproj,~,~] = qr(U,'econ');
             SDVals(i + 1) = norm(Ustr - Uproj*(Uproj'*Ustr));  
-            if mod(i,25) == 0
+            if mod(i,5) == 0
                 norm(Ustr - Uproj*(Uproj'*Ustr))
             end
-        end
+            %U = Uproj;
+        end 
         Xhat = U*V;
         objVals(i+1) = norm(Xzeros(idx) - Xhat(idx))/norm(Xzeros(idx));
     end

@@ -1,7 +1,7 @@
-function [SDVals,objVals,U,V] = altMinCntrlNew(n,q,r,Uinit, ...
+function [SDVals,objVals,U,V] = altMinInit(n,q,r,Uinit, ...
                                             Ustr,T, ...
                                             rowIdx,Xcol,colIdx,Xrow, Xhat0,idx,Xzeros,real, Pupdt)
-    % NOTE: P update does not work. Set P updt = 0;
+    % NOTE: P update does not work. Set Pupdt = 0 manually below.
     Pupdt = 0;
     U = Uinit;
     if real == 0

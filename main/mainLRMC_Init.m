@@ -9,12 +9,12 @@ addpath(genpath('.\utils'));
 cd(dir)    
 tic
 %---------------------------------
-r = 2;
+r = 5;
 real = 0;
-T = 75;
+T = 0;
 n = 1000;
 q = 1000;
-p = 0.5;
+p = 0.2;
 same = 0;
 MC = 5;
 %------------------------
@@ -47,7 +47,7 @@ fill = "mean";
 %fill = "median";
 %fill = "both";
 %-----------------------
-if real % ground truth matrix read only once if the data ar real
+if real % ground truth matrix read only once if the data are real
     idxFlag = 1;
     [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real,idxFlag,0);
 end
@@ -60,12 +60,14 @@ for i = 1 : length(numBlocksTry_)
         end
         % U0 from unpermuted
         [U0, S0, V0] = svds(Xzeros,r);
-        U0 = U0(:,1:r); S0 = S0(1:r,1:r); V0 = V0(:,1:r);
+        U0 = U0(:,1:r);
+        S0 = S0(1:r,1:r);
+        V0 = V0(:,1:r);
         X0 = U0*S0*V0';
         X0Err(i,mc) = norm(X0(idx) - Xzeros(idx))/norm(Xzeros(idx));
         % U0 from unpermuted plus iterations
         Pupdt = 0;
-        [SDVals,Errs] = altMinCntrlNew(n,q, r, U0, Ustr, T, rowIdx, Xcol, colIdx, Xrow, X0,idx,Xzeros,real,Pupdt);
+        [SDVals,Errs] = altMinInit(n,q, r, U0, Ustr, T, rowIdx, Xcol, colIdx, Xrow, X0,idx,Xzeros,real,Pupdt);
         SDU0_(i,mc) = SDVals(end);        
         X0Err_(i,mc) = Errs(end);  
         if real
@@ -77,7 +79,9 @@ for i = 1 : length(numBlocksTry_)
         %------------------------------------
         % ----------- U0 from cllps
         [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);
-        U0Cllps = U0Cllps(:,1:r); S0Cllps = S0Cllps(1:r,1:r); V0Cllps = V0Cllps(:,1:r);
+        U0Cllps = U0Cllps(:,1:r);
+        S0Cllps = S0Cllps(1:r,1:r);
+        V0Cllps = V0Cllps(:,1:r);
         X0Cllps = U0Cllps*S0Cllps*V0Cllps';
         X0CllpsErr(i,mc) = norm(X0Cllps(idx) - Xzeros(idx))/norm(Xzeros(idx));
         %SDU0Cllps(i,mc) = norm(Ustr - U0Cllps*(U0Cllps'*Ustr));
@@ -85,14 +89,16 @@ for i = 1 : length(numBlocksTry_)
         idxFlag = 0;
         Pupdt = 0;
         [XzerosCllps, rowIdxCllps, colIdxCllps, XcolCllps, XrowCllps,~] = processMatrix(XzerosCllps, n, q, p,real,idxFlag,idx);
-        [SDVals,Errs] = altMinCntrlNew(n,q, r, U0Cllps, Ustr, T, ...
+        [SDVals,Errs] = altMinInit(n,q, r, U0Cllps, Ustr, T, ...
                                        rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
                                        X0Cllps,idx,Xzeros,real,Pupdt);
         SDU0Cllps_(i,mc) = SDVals(end);
         X0CllpsErr_(i,mc) = Errs(end);
         % ------------ U0 from permuted matrix
         [U0Perm, S0Perm, V0Perm] = svds(XzerosPerm,r);
-        U0Perm = U0Perm(:,1:r); S0Perm = S0Perm(1:r,1:r); V0Perm = V0Perm(:,1:r);
+        U0Perm = U0Perm(:,1:r);
+        S0Perm = S0Perm(1:r,1:r);
+        V0Perm = V0Perm(:,1:r);
         X0Perm = U0Perm*S0Perm*V0Perm';        
         X0PermErr(i,mc) = norm(X0Perm(idx) - Xzeros(idx))/norm(Xzeros(idx));
         %SDU0Perm(i,mc) = norm(Ustr - U0Perm*(U0Perm'*Ustr));    
@@ -100,7 +106,7 @@ for i = 1 : length(numBlocksTry_)
         idxFlag = 0;
         Pupdt = 0;
         [XzerosPerm, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);        
-        [SDVals,Errs] = altMinCntrlNew(n,q, r, U0Cllps, Ustr, T, ...
+        [SDVals,Errs] = altMinInit(n,q, r, U0Perm, Ustr, T, ...
                                        rowIdxPerm, XcolPerm, colIdxPerm, XrowPerm, ...
                                        X0Perm,idx,Xzeros,real,Pupdt);
         SDU0Perm_(i,mc) = SDVals(end);
@@ -133,28 +139,23 @@ function [XzerosPerm, XzerosCllps] = processBlocks(rowIdx, Xcol, Xzeros, q, numB
     XzerosPerm = Xzeros;
     rowIdxPerm = cell(q,1);
     XcolPerm = cell(q, 1); 
-
     XzerosCllps = Xzeros;
-    for k = 1 : q
 
+    for k = 1 : q
         l_k = length(rowIdx{k});
         numBlocks = min(numBlocksTry, l_k);
-        r_ = floor(l_k / numBlocks) * ones(numBlocks, 1);
-        
+        r_ = floor(l_k / numBlocks) * ones(numBlocks, 1);        
         if mod(l_k, numBlocks) > 0
             r_(end) = r_(end) + l_k - floor(l_k / numBlocks) * numBlocks;
-        end
-        
+        end        
         if ~same
             pi_map = get_permutation_r(l_k, r_);
         else
             pi_map = 1:l_k; % Identity mapping if 'same' is true
-        end
-        
+        end        
         rowIdxPerm{k} = rowIdx{k}(pi_map);
         XcolPerm{k} = Xzeros(rowIdxPerm{k}, k);
         XzerosPerm(rowIdxPerm{k}, k) = Xcol{k};
-        
         for s = 1:numBlocks
             start = sum(r_(1:s)) - r_(s) + 1;
             stop = start + r_(s) - 1;
@@ -169,6 +170,7 @@ function [XzerosPerm, XzerosCllps] = processBlocks(rowIdx, Xcol, Xzeros, q, numB
             end
         end
     end
+
 end
 
 
