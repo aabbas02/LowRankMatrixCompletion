@@ -35,32 +35,32 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
                 B(:,k) = (Ak_{k}*U)\ykPerm_{k};
             end
             if updtP 
-                yHat(:,k) = Ak_{k}*U*B(:,k);
-            end
-            % min over P_k
-            if updtP && same == 0
-                for s = 1 : length(r_)
-                    start = sum(r_(1:s)) - r_(s) + 1;
-                    stop = sum(r_(1:s));
-                    C = yPerm(start:stop,k)*yHat(start:stop,k)';                    
-                    M = matchpairs(-C,1e10); % M is a matrix with 2 columns and m rows, 
-                                             % The second column has ascending
-                                             % indices in order 1, ..., m
-                                             % The first column has the
-                                             % corresponding/matching row indices
-                                             % 5,1 means P(5,1) = 1, i.e., 
-                                             % row 5 matched to 1
-                    idx  = M(:,1);
-                    idx = start - 1  + idx;
-                    Ak_{k}(idx,:) = Ak_{k}(start:stop,:);                   
-                    %[~,idx1] = sort(yHat_k(start:stop));
-                    %[~,idx2] = sort(ykPerm_{k}(start:stop));
-                    %idx1 = start - 1 + idx1;
-                    %idx2 = start - 1 + idx2;
-                    %Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
+                yHatk = Ak_{k}*U*B(:,k);
+                yHat(:,k) = yHatk;
+                if same == 0
+                    for s = 1 : length(r_)
+                        start = sum(r_(1:s)) - r_(s) + 1;
+                        stop = sum(r_(1:s));
+                        %C = yPerm(start:stop,k)*yHat(start:stop,k)';                    
+                        %M = matchpairs(-C,1e10); % M is a matrix with 2 columns and m rows, 
+                                                 % The second column has ascending
+                                                 % indices in order 1, ..., m
+                                                 % The first column has the
+                                                 % corresponding/matching row indices
+                                                 % 5,1 means P(5,1) = 1, i.e., 
+                                                 % row 5 matched to 1
+                        %idx  = M(:,1);
+                        %idx = start - 1  + idx;
+                        %Ak_{k}(idx,:) = Ak_{k}(start:stop,:);  
+                        [~,idx1] = sort(yHatk(start:stop));
+                        [~,idx2] = sort(ykPerm_{k}(start:stop));
+                        idx1 = start - 1 + idx1;
+                        idx2 = start - 1 + idx2;
+                        Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
+                    end                    
                 end
             end
-        end % exit the for loop over columns 1 through q
+        end
         if updtP && same == 1
             for s =  1 : length(r_)
                 start = sum(r_(1:s)) - r_(s) + 1;
@@ -78,22 +78,19 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
                 for k = 1:q
                     Ak_{k}(idx,:) = Ak_{k}(start:stop,:);                   
                 end
-                %M(M(:,1)) = M(:,2);
-                %temp = M(:,1);
-                %temp = start - 1 + temp;
-                %assignment(start:stop) = temp;   
             end
         end
         % U update
         X = U*B;
         if i == 1
             X0 = X;
+            maxSigma = norm(X0);
         end
         gradU = 0*gradU;
         for k = 1 : q
             gradU = gradU + Ak_{k}'*(Ak_{k}*X(:,k)-ykPerm_{k})*B(:,k)';
         end
-        eta = 5e-1/norm(X0)^2;
+        eta = 5e-1/maxSigma^2;
         U = U - (eta/m)*gradU;
         [U,~,~] = qr(U,'econ');
         SDVals(i + 1) = norm( (eye(n) - U*U')*Ustr ,'fro' );

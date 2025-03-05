@@ -33,7 +33,7 @@ MPerm = zeros(n,q);
 SDVals_UnPerm = zeros(MC,T+1);
 SDVals_sLcl = zeros(MC,T+1);
 SDVals_Perm = zeros(MC,T+1);
-same = 1;
+same = 0;
 %if same
 %    pi_map = get_permutation_r(m,r_);
 %end
@@ -58,7 +58,6 @@ for mc = 1 : MC
                 ykCllps_{k}(i) = sum(ykPerm_{k}(start:stop,:));
             end
         MCllps(:, k) = AkCllps_{k}'*ykCllps_{k};
-        %MPerm(:, k) = Ak_{k}'*ykPerm_{k};
     end
     [U0,~,~,] = svd(M,"econ");
     U0 = U0(:,1:r);
@@ -72,8 +71,8 @@ for mc = 1 : MC
     updtP = 0;
     SDVals_UnPerm(mc,:) = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r,T,Ustr,r_,updtP,same);
     updtP = 1;
-    same = 1;
-    SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_,updtP,same);
+    SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, ...
+        AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_,updtP,same);
     %SDVals_Perm(mc,:) = altGDMin_MtrxSensing(Ak_, ykPerm_, U0Perm,r,T,Ustr);
     mc
 end
