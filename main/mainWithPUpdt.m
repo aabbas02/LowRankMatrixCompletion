@@ -11,12 +11,13 @@ tic
 %---------------------------------
 r = 5;
 real = 0;
-T = 300;
+T_init = 100;
+T = 500;
 n = 1000;
 q = 1000;
 p = 0.05;
 same = 0;
-MC = 75;
+MC = 25;
 %------------------------
 if real
     [Ustr,X,p] = getMovieLens(r);
@@ -52,16 +53,11 @@ for i = 1 : length(numBlocksTry_)
         [XzerosCllps, rowIdxCllps, colIdxCllps, XcolCllps, XrowCllps,~] = processMatrix(XzerosCllps, n, q, p,real,idxFlag,idx);
         [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);        
         Pupdt = 0;
-        Tinit = 0;
-        [SDVals,~,U_init,B_init] = altMinInit(n,q, r, U0Cllps, Ustr, Tinit, ...
+        [SDVals,~,U_init,B_init] = altMinInit(n,q, r, U0Cllps, Ustr, T_init, ...
                                        rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
                                        U0Cllps*S0Cllps*V0Cllps',idx,XzerosCllps,real,Pupdt);
         SDVals
         
-        %B_init = zeros(r,q);
-        %for j =  1 : q
-        %    B_init(:,j) = U0Cllps(rowIdxCllps{j},:)\XcolCllps{j};       
-        %end
         X_init = U_init*B_init;
         [~, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);
         [SDValsAltGDMin(mc,:),Errs] = altGDMinWithP_LRMC(n,q, r,r_,p, U_init, Ustr, T, ...
@@ -72,7 +68,7 @@ for i = 1 : length(numBlocksTry_)
 end
 SDValsAltGDMin = sum(SDValsAltGDMin,1)/MC;
 if real == 0
-    plotRslts(SDValsAltGDMin,n,q,r,p,numBlocksTry_(1),MC,same,fill,real,T);
+    plotRslts(SDValsAltGDMin,n,q,r,p,numBlocksTry_(1),MC,same,fill,real,T,T_init);
 end
 
 function [XzerosPerm, XzerosCllps,r_cell] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill)
@@ -119,7 +115,7 @@ function [XzerosPerm, XzerosCllps,r_cell] = processBlocks(rowIdx, Xcol, Xzeros, 
 end
 
 
-function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T)
+function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T,T_init)
     figure;
     %hold on
     %if real == 0
@@ -146,7 +142,7 @@ function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T)
     end
     xlabel('Iterations t', 'FontSize',14, 'Interpreter','Latex')
     stringTitle = ['AltMinbyGD', num2str(MC), ...
-                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_p_', num2str(p),'_numBlocks_', num2str((numBlocks)), '_same_',num2str(same),'_fill_',num2str(fill), '_T_',num2str(T)];
+                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_p_', num2str(p),'_numBlocks_', num2str((numBlocks)), '_same_',num2str(same),'_fill_',num2str(fill), '_T_',num2str(T), '_T_init_',num2str(T_init)];
     
     savefig([stringTitle, '.fig']);
 end

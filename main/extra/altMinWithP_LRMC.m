@@ -8,7 +8,9 @@ function [SDVals,objVals] = altMinWithP_LRMC(n,q,r,Uinit, ...
     % Update U - this is the tricky part because
     % The first row of U does not depend on the observed entries of X* in
     % row 1 anymore ( that is after the P update).
-
+    
+    % Easier implementation of AltMin with P update for LRMC by gradient
+    % descent for Least-squares instead of pseudo-inverse
     V = B_init;
     U = Uinit;
     if real == 0

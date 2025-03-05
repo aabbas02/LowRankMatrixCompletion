@@ -11,12 +11,12 @@ tic
 %---------------------------------
 r = 5;
 real = 0;
-T = 0;
+T = 25;
 n = 1000;
 q = 1000;
-p = 0.2;
+p = 0.5;
 same = 0;
-MC = 5;
+MC = 125;
 %------------------------
 if real
     [Ustr,X,p] = getMovieLens(r);
@@ -29,7 +29,7 @@ else
     Bstr = randn(r,q);
     X  = Ustr*Bstr;
 end
-numBlocksTry_ = 10:10:100;
+numBlocksTry_ = 5:5:50;
 %-------------------------------
 SDU0 = zeros(length(numBlocksTry_),MC);
 SDU0_ = zeros(length(numBlocksTry_),MC);

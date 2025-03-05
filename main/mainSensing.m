@@ -13,10 +13,10 @@ r = 5;
 n = 600;
 q = 1000;
 m = 100;
-numBlocks = 10;   %effectively, m_new = numBlocks
+numBlocks = 20;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 200;
-MC = 15;
+MC = 1;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);

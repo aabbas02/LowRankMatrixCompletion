@@ -45,7 +45,7 @@ function [SDVals,objVals] = altGDMinWithP_LRMC(n,q,r,r_,p,Uinit, ...
             V(:,j) = U(rowIdx{j},:)\Xcol{j};
         end
         % U update
-        for T_in = 1:100
+        for T_in = 1:1
             gradU = 0*gradU;
             for j = 1 : q
                 gradU(rowIdx{j},:) = gradU(rowIdx{j},:) + (U(rowIdx{j},:)*V(:,j) - Xcol{j})*V(:,j)';
