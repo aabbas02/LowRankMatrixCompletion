@@ -88,23 +88,16 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
         end
         gradU = 0*gradU;
         if altMin 
-            T_in = 25;
+        for _ 
+        
         else
-            T_in = 1;
-        end
-        for t_in = 1:T_in
-            gradU = 0*gradU;
             for k = 1 : q
                 gradU = gradU + Ak_{k}'*(Ak_{k}*X(:,k)-ykPerm_{k})*B(:,k)';
             end
             eta = 5e-1/maxSigma^2;
             U = U - (eta/m)*gradU;
-            X = U*B;
         end
-        [Uproj,~,~] = qr(U,'econ');
-        SDVals(i + 1) = norm( Ustr - Uproj*(Uproj'*Ustr) ,'fro' );
-        if altMin == 0 %altMin = 0 means altGDMin
-            U = Uproj; 
-        end
+        [U,~,~] = qr(U,'econ');
+        SDVals(i + 1) = norm( (eye(n) - U*U')*Ustr ,'fro' );
     end
-end
+end 
