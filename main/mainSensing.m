@@ -10,14 +10,15 @@ addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
 altMin  = 1;
-r = 5;
 n = 600;
 q = 1000;
+r = 5;
 m = 100;
 numBlocks = 20;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
-T = 50;
-MC = 125;
+T = 100;
+TAltMin = 0.5*T+1;
+MC = 2;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
@@ -31,13 +32,11 @@ ykPerm_ = cell(q,1);
 M = zeros(n,q);
 MCllps = zeros(n,q);
 MPerm = zeros(n,q);
-SDVals_UnPerm = zeros(MC,T+1);
-SDVals_sLcl = zeros(MC,T+1);
-SDVals_Perm = zeros(MC,T+1);
+SDVals_UnPerm = zeros(MC,T+1); time_UnPerm = zeros(MC,T+1); 
+SDVals_sLcl = zeros(MC,T+1); time_sLcl = zeros(MC,T+1);
+SDVals_Perm = zeros(MC,T+1); time_Perm = zeros(MC,T+1);
+SDVals_AltMin = zeros(MC,TAltMin+1); time_AltMin=zeros(MC,TAltMin+1);
 same = 1;
-%if same
-%    pi_map = get_permutation_r(m,r_);
-%end
 for mc = 1 : MC
     if same
         pi_map = get_permutation_r(m,r_);
@@ -70,12 +69,18 @@ for mc = 1 : MC
     %U0Perm = U0Perm(:,1:r);
     %------------------------------
     updtP = 0;
-    SDVals_UnPerm(mc,:) = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r,T,Ustr,r_,updtP,same,altMin);
-    updtP = 1;
-    SDVals_sLcl(mc,:) = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, ...
-    AkCllps_, ykCllps_, U0Cllps,r,T,Ustr,r_,updtP,same,altMin);
-    %SDVals_Perm(mc,:) = altGDMin_MtrxSensing(Ak_, ykPerm_, U0Perm,r,T,Ustr);
+    [SDVals_UnPerm(mc,:),time_UnPerm(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r, ...
+        T,Ustr,r_,updtP,same,altMin);
+    %------------------------------------
+    updtP = 1; altMin = 0;
+    [SDVals_sLcl(mc,:), time_sLcl(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r, ...
+        T,Ustr,r_,updtP,same,altMin);
+    %--------------------------------------
+    updtP = 1; altMin = 1; 
+    [SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
+        r,TAltMin,Ustr,r_,updtP,same,altMin);
+
     mc
 end
 %---
-plotRslts(SDVals_sLcl, SDVals_Perm, SDVals_UnPerm,n,q,r,m,numBlocks,MC,same);
+plotRslts(time_sLcl, SDVals_sLcl, time_UnPerm, SDVals_UnPerm, time_AltMin, SDVals_AltMin, n,q,r,m,numBlocks,MC,same);

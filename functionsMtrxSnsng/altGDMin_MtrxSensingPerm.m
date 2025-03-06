@@ -1,18 +1,18 @@
-function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uinit,r,T,Ustr,r_,updtP,same,altMin)
+function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uinit,r,T,Ustr,r_,updtP,same,altMin)
 	% This function should implement altGDMin with both permuted and non-permuted measurements
 	% The above functionality is achieved by setting the arguments correspondingly
 	% AltGDMin wout Perm: updtP = 0, Uinit = U0, Ak_ = Ak, ykPerm_ = yk, AkCllps_ = Ak, ykCllps_ = yk
 	% AltGDMin with Perm: updtP = 1, Uinit = U0Cllps, Ak_ = Ak, ykPerm_ = ykPerm, AkCllps_ = AkCllps_, ykCllps_ = ykCllps_
 	%---
     % Algorithm
-    % Init: U^(0), B^(0)
+    % Init gives U^(0), B^(0), where B^(0) is by collapsed estimate
     % Steps: min P, min U, min B
     % if t == 0, update bk by collapsed estimate, else update by full
-    % estimate
-    % repeat
+    
     m = size(Ak_{1}, 1);
     n = size(Ak_{1}, 2);
     SDVals = zeros(T+1,1);
+    times = zeros(T+1,1);
     U = Uinit;
     SDVals(1) = norm((eye(n) - U*U')*Ustr ,'fro');
     q = length(ykPerm_);
@@ -25,8 +25,13 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
             yPerm(:,k) = ykPerm_{k};
         end
     %end
+    if altMin 
+        T_in = 25;
+    else
+        T_in = 1;
+    end    
     for i = 1 : T
-        % b_k update and P_k update in for k = 1 : q loop below
+        tStart = tic;
         for k = 1 : q
             % Least-squares B_k update
             if i == 1 % collapsed least-squares
@@ -87,11 +92,6 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
             maxSigma = norm(X0);
         end
         gradU = 0*gradU;
-        if altMin 
-            T_in = 25;
-        else
-            T_in = 1;
-        end
         for t_in = 1:T_in
             gradU = 0*gradU;
             for k = 1 : q
@@ -101,7 +101,14 @@ function [SDVals] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uini
             U = U - (eta/m)*gradU;
             X = U*B;
         end
+        tStrtQR = tic;
         [Uproj,~,~] = qr(U,'econ');
+        tQR = toc(tStrtQR);
+        if altMin
+            times(i+1) = times(i) + toc(tStart)  - tQR;
+        else
+            times(i+1) = times(i) + toc(tStart);
+        end
         SDVals(i + 1) = norm( Ustr - Uproj*(Uproj'*Ustr) ,'fro' );
         if altMin == 0 %altMin = 0 means altGDMin
             U = Uproj; 
