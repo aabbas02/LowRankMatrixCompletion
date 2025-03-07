@@ -36,7 +36,7 @@ function plotRslts(time_AltGDMin, SDVals_AltGDMin, ...
     stringTitle = ['Iter_MC_', num2str(MC), ...
                    '_n_', num2str(n), '_q_', num2str(q),
                    '_r_', num2str(r), '_m_', num2str(m),
-                   '_numBlocks_',num2str(numBlocks), '_same_',num2str(same), '_T_LS', num2str(T_LS)];
+                   '_numBlocks_',num2str(numBlocks), '_same_',num2str(same)];
     
     savefig([stringTitle, '.fig']);
     figure
@@ -62,9 +62,7 @@ function plotRslts(time_AltGDMin, SDVals_AltGDMin, ...
     ylabel("$SD(U,U^*)$","FontSize",14,'Interpreter','Latex')
     xlabel('Seconds (Time)', 'FontSize',14, 'Interpreter','Latex')
     stringTitle = ['Time_MC_', num2str(MC), ...
-                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r),
-                   '_m_', num2str(m), '_numBlocks_',num2str(numBlocks),
-                   '_same_',num2str(same),'_T_LS', num2str(T_LS)];
+                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_m_', num2str(m), '_numBlocks_',num2str(numBlocks), '_same_',num2str(same)];
     
     savefig([stringTitle, '.fig']);
 
