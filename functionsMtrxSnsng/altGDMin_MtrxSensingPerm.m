@@ -26,7 +26,7 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
         end
     %end
     if altMin 
-        T_in = 25;
+        T_in = 100;
     else
         T_in = 1;
     end    
@@ -88,8 +88,7 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
         % U update
         X = U*B;
         if i == 1
-            X0 = X;
-            maxSigma = norm(X0);
+            maxSigma = norm(X);
         end
         gradU = 0*gradU;
         for t_in = 1:T_in
