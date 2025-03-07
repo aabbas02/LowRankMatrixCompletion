@@ -9,12 +9,12 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-n = 600; q = 1000; r = 5;
+n = 1000; q = 1000; r = 10;
 m = 100; numBlocks = 20;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
-T = 100;
-TAltMin = 0.5*T+1;
-MC = 1;
+T = 200;
+TAltMin = 0.5*T+1; T_LS = 25;
+MC = 15;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
@@ -72,7 +72,7 @@ for mc = 1 : MC
     [SDVals_sLcl(mc,:), time_sLcl(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r, ...
         T,Ustr,r_,updtP,same,altMin,T_LS);
     %--------------------------------------
-    updtP = 1; altMin = 1; T_LS = 50; 
+    updtP = 1; altMin = 1; 
     [SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
         r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS);
 

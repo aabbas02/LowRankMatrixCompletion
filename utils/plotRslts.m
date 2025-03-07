@@ -14,57 +14,57 @@ function plotRslts(time_AltGDMin, SDVals_AltGDMin, ...
     figure;
     
     semilogy(SDVals_AltGDMin, ...
-        'DisplayName', 'SDVals (AltGDMin)', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
+        'DisplayName', 'SDVals (AltGDMin)', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 5);
     hold on;
     %semilogy(SDVals_Perm, ...
     %    'DisplayName', 'SDVals (Naive)', 'LineWidth', 1.45, 'Marker', 'square', 'MarkerSize', 7);
     %
     semilogy(SDVals_UnPerm, ...
-        'DisplayName', 'SDVals (Unpermuted)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 7);
+        'DisplayName', 'SDVals (Unpermuted)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 5);
     semilogy(SDVals_AltMin,...
-         'DisplayName', 'SDVals (AltMin)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 7)
+         'DisplayName', 'SDVals (AltMin)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 5)
     grid on
     
     
     title("n = " + n + ", q = " + q +...
           ", r = " + r + ", m = " + m + ", num Blocks = " + numBlocks +  ", MC = " + MC + ", same = " + same, ...
-           'Interpreter', 'Latex', 'FontSize',14)
+           'Interpreter', 'Latex', 'FontSize',11)
     
     legend('Interpreter', 'Latex', 'Fontsize', 9);
-    ylabel("$SD(U,U^*)$","FontSize",14,'Interpreter','Latex')
+    ylabel("$SD(U^{(t)},U^*)$","FontSize",14,'Interpreter','Latex')
     xlabel('Iterations (t)', 'FontSize',14, 'Interpreter','Latex')
     stringTitle = ['Iter_MC_', num2str(MC), ...
-                   '_n_', num2str(n), '_q_', num2str(q),
-                   '_r_', num2str(r), '_m_', num2str(m),
-                   '_numBlocks_',num2str(numBlocks), '_same_',num2str(same), '_T_LS', num2str(T_LS)];
+                   '_n_', num2str(n), '_q_', num2str(q), ...
+                   '_r_', num2str(r), '_m_', num2str(m), ...
+                   '_numBlocks_',num2str(numBlocks), '_same_',num2str(same), '_T_LS_', num2str(T_LS)];
     
     savefig([stringTitle, '.fig']);
     figure
     
     semilogy(time_AltGDMin, SDVals_AltGDMin, ...
-        'DisplayName', 'SDVals (AltGDMin)', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
+        'DisplayName', 'SDVals (AltGDMin)', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 5);
     hold on;
     %semilogy(SDVals_Perm, ...
     %    'DisplayName', 'SDVals (Naive)', 'LineWidth', 1.45, 'Marker', 'square', 'MarkerSize', 7);
     %
     semilogy(time_UnPerm, SDVals_UnPerm, ...
-        'DisplayName', 'SDVals (Unpermuted)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 7);
+        'DisplayName', 'SDVals (Unpermuted)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 5);
     semilogy(time_AltMin, SDVals_AltMin,...
-         'DisplayName', 'SDVals (AltMin)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 7)
+         'DisplayName', 'SDVals (AltMin)', 'LineWidth', 1.45, 'Marker', 'x', 'MarkerSize', 5)
     grid on
     
     
     title("n = " + n + ", q = " + q +...
           ", r = " + r + ", m = " + m + ", num Blocks = " + numBlocks +  ", MC = " + MC + ", same = " + same, ...
-           'Interpreter', 'Latex', 'FontSize',14)
+           'Interpreter', 'Latex', 'FontSize',11)
     
     legend('Interpreter', 'Latex', 'Fontsize', 9);
-    ylabel("$SD(U,U^*)$","FontSize",14,'Interpreter','Latex')
-    xlabel('Seconds (Time)', 'FontSize',14, 'Interpreter','Latex')
+    ylabel("$SD(U^{(t)},U^*)$","FontSize",14,'Interpreter','Latex')
+    xlabel('t (Seconds)', 'FontSize',14, 'Interpreter','Latex')
     stringTitle = ['Time_MC_', num2str(MC), ...
-                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r),
-                   '_m_', num2str(m), '_numBlocks_',num2str(numBlocks),
-                   '_same_',num2str(same),'_T_LS', num2str(T_LS)];
+                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), ... 
+                   '_m_', num2str(m), '_numBlocks_',num2str(numBlocks), ...
+                   '_same_',num2str(same),'_T_LS_', num2str(T_LS)];
     
     savefig([stringTitle, '.fig']);
 
