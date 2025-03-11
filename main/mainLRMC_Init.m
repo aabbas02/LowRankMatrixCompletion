@@ -4,7 +4,7 @@ clear all
 dir = pwd;
 % For linux, replace '\' with '/'
 cd ..
-%addpath(genpath('.\functionsMtrxSnsng'));
+addpath(genpath('.\functionsMtrxCmpltn'));
 addpath(genpath('.\utils'));
 cd(dir)    
 tic
@@ -16,7 +16,7 @@ n = 1000;
 q = 1000;
 p = 0.5;
 same = 0;
-MC = 125;
+MC = 1;
 %------------------------
 if real
     [Ustr,X,p] = getMovieLens(r);
@@ -67,7 +67,7 @@ for i = 1 : length(numBlocksTry_)
         X0Err(i,mc) = norm(X0(idx) - Xzeros(idx))/norm(Xzeros(idx));
         % U0 from unpermuted plus iterations
         Pupdt = 0;
-        [SDVals,Errs] = altMinInit(n,q, r, U0, Ustr, T, rowIdx, Xcol, colIdx, Xrow, X0,idx,Xzeros,real,Pupdt);
+        [SDVals,Errs] = altMinInit_LRMC(n,q, r, U0, Ustr, T, rowIdx, Xcol, colIdx, Xrow, X0,idx,Xzeros,real,Pupdt);
         SDU0_(i,mc) = SDVals(end);        
         X0Err_(i,mc) = Errs(end);  
         if real
@@ -89,7 +89,7 @@ for i = 1 : length(numBlocksTry_)
         idxFlag = 0;
         Pupdt = 0;
         [XzerosCllps, rowIdxCllps, colIdxCllps, XcolCllps, XrowCllps,~] = processMatrix(XzerosCllps, n, q, p,real,idxFlag,idx);
-        [SDVals,Errs] = altMinInit(n,q, r, U0Cllps, Ustr, T, ...
+        [SDVals,Errs] = altMinInit_LRMC(n,q, r, U0Cllps, Ustr, T, ...
                                        rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
                                        X0Cllps,idx,Xzeros,real,Pupdt);
         SDU0Cllps_(i,mc) = SDVals(end);
@@ -106,7 +106,7 @@ for i = 1 : length(numBlocksTry_)
         idxFlag = 0;
         Pupdt = 0;
         [XzerosPerm, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);        
-        [SDVals,Errs] = altMinInit(n,q, r, U0Perm, Ustr, T, ...
+        [SDVals,Errs] = altMinInit_LRMC(n,q, r, U0Perm, Ustr, T, ...
                                        rowIdxPerm, XcolPerm, colIdxPerm, XrowPerm, ...
                                        X0Perm,idx,Xzeros,real,Pupdt);
         SDU0Perm_(i,mc) = SDVals(end);

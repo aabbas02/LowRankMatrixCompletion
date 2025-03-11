@@ -4,18 +4,19 @@ clear all
 dir = pwd;
 % For linux, replace '\' with '/'
 cd ..
-%addpath(genpath('.\functionsMtrxSnsng'));
+addpath(genpath('.\functionsMtrxCmpltn'));
 addpath(genpath('.\utils'));
 cd(dir)    
 tic
 %---------------------------------
-r = 5;
+r = 3;
 real = 0;
 T_init = 100;
-T = 500;
+T_LS = 25;
+T = 200;
 n = 1000;
 q = 1000;
-p = 0.05;
+p = 0.1;
 same = 0;
 MC = 25;
 %------------------------
@@ -30,7 +31,7 @@ else
     Bstr = randn(r,q);
     X  = Ustr*Bstr;
 end
-numBlocksTry_ = [20];
+numBlocksTry_ = [25];
 SDValsAltGDMin = zeros(MC,T+1);
 %-------------------------------
 fill = "mean";
@@ -53,22 +54,22 @@ for i = 1 : length(numBlocksTry_)
         [XzerosCllps, rowIdxCllps, colIdxCllps, XcolCllps, XrowCllps,~] = processMatrix(XzerosCllps, n, q, p,real,idxFlag,idx);
         [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);        
         Pupdt = 0;
-        [SDVals,~,U_init,B_init] = altMinInit(n,q, r, U0Cllps, Ustr, T_init, ...
-                                       rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
-                                       U0Cllps*S0Cllps*V0Cllps',idx,XzerosCllps,real,Pupdt);
+        [SDVals,~,U_init,B_init] = altMinInit_LRMC(n,q, r, U0Cllps, Ustr, T_init, ...
+                                                   rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
+                                                   U0Cllps*S0Cllps*V0Cllps',idx,XzerosCllps,real,Pupdt);
         SDVals
         
         X_init = U_init*B_init;
         [~, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);
-        [SDValsAltGDMin(mc,:),Errs] = altGDMinWithP_LRMC(n,q, r,r_,p, U_init, Ustr, T, ...
-                                    rowIdxPerm, XcolPerm, colIdxPerm, XrowPerm, ...
-                                    X_init,idx,XzerosPerm,real,B_init);        
+        [SDValsAltGDMin(mc,:),Errs] = altGDMin_LRMC(n,q, r,r_,p, U_init, Ustr, T, ...
+                                        rowIdxPerm, XcolPerm, colIdxPerm, XrowPerm, ...
+                                        X_init,idx,XzerosPerm,real,B_init,T_LS);        
         mc
     end
 end
 SDValsAltGDMin = sum(SDValsAltGDMin,1)/MC;
 if real == 0
-    plotRslts(SDValsAltGDMin,n,q,r,p,numBlocksTry_(1),MC,same,fill,real,T,T_init);
+    plotRslts(SDValsAltGDMin,n,q,r,p,numBlocksTry_(1),MC,same,fill,real,T,T_init,T_LS);
 end
 
 function [XzerosPerm, XzerosCllps,r_cell] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill)
@@ -115,7 +116,7 @@ function [XzerosPerm, XzerosCllps,r_cell] = processBlocks(rowIdx, Xcol, Xzeros, 
 end
 
 
-function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T,T_init)
+function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T,T_init,T_LS)
     figure;
     %hold on
     %if real == 0
@@ -141,8 +142,11 @@ function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T,T_init)
         ylabel("Initialization Error", "FontSize",11,"Interpreter","Latex")
     end
     xlabel('Iterations t', 'FontSize',14, 'Interpreter','Latex')
-    stringTitle = ['AltMinbyGD', num2str(MC), ...
-                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_p_', num2str(p),'_numBlocks_', num2str((numBlocks)), '_same_',num2str(same),'_fill_',num2str(fill), '_T_',num2str(T), '_T_init_',num2str(T_init)];
+    stringTitle = ['LRMC_AltMinbyGD', num2str(MC), ...
+                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_p_',...
+                   num2str(p),'_numBlocks_', num2str((numBlocks)), '_same_',num2str(same),...
+                   '_fill_',num2str(fill), '_T_',num2str(T), '_T_init_',num2str(T_init),...
+                   '_T_LS_',num2str(T_LS)];
     
     savefig([stringTitle, '.fig']);
 end
