@@ -14,7 +14,7 @@ m = 100; numBlocks = 20;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 200;
 TAltMin = 0.5*T+1; T_LS = 25;
-MC = 25;
+MC = 125;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
