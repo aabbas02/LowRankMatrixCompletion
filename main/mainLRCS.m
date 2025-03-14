@@ -9,12 +9,12 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-n = 1000; q = 1000; r = 10;
-m = 100; numBlocks = 20;   %effectively, m_new = numBlocks
+n = 600; q = 1000; r = 5;
+m = 100; numBlocks = 10;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 200;
-TAltMin = 0.5*T+1; T_LS = 25;
-MC = 15;
+TAltMin = 0.5*T+1; T_LS = 200;
+MC = 101;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);

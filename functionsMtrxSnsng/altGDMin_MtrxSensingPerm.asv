@@ -102,7 +102,7 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
             U = U - (eta/m)*gradU;
             X = U*B;
         %end
-            t_in = t_in + 1;
+        t_in = t_in + 1;
         end
         tStrtQR = tic;
         [Uproj,~,~] = qr(U,'econ');
