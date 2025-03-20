@@ -9,12 +9,12 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-n = 600; q = 1000; r = 5;
-m = 100; numBlocks = 10;   %effectively, m_new = numBlocks
+n = 2000; q = 1000; r = 5;
+m = 100; numBlocks = 20;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
-T = 200;
+T = 300;
 TAltMin = 0.5*T+1; T_LS = 200;
-MC = 101;
+MC = 125;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
@@ -80,3 +80,4 @@ for mc = 1 : MC
 end
 %---
 plotRslts(time_sLcl, SDVals_sLcl, time_UnPerm, SDVals_UnPerm, time_AltMin, SDVals_AltMin, n,q,r,m,numBlocks,MC,same,T_LS);
+  
