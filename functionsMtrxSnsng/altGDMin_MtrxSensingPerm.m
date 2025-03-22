@@ -98,7 +98,7 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
             for k = 1 : q
                 gradU = gradU + Ak_{k}'*(Ak_{k}*X(:,k)-ykPerm_{k})*B(:,k)';
             end
-            eta = 1e-1/maxSigma^2;
+            eta = 5e-2/maxSigma^2;
             U = U - (eta/m)*gradU;
             X = U*B;
         %end

@@ -12,9 +12,9 @@ cd(dir)
 n = 2000; q = 1000; r = 5;
 m = 100; numBlocks = 20;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
-T = 300;
+T = 500;
 TAltMin = 0.5*T+1; T_LS = 200;
-MC = 125;
+MC = 5;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
