@@ -12,9 +12,9 @@ cd(dir)
 n = 2000; q = 1000; r = 5;
 m = 100; numBlocks = 20;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
-T = 500;
+T = 100;
 TAltMin = 0.5*T+1; T_LS = 200;
-MC = 5;
+MC = 25;
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
@@ -64,9 +64,9 @@ for mc = 1 : MC
     %[U0Perm,~,~] = svd(MPerm,"econ");
     %U0Perm = U0Perm(:,1:r);
     %------------------------------
-    updtP = 0; altMin = 0;
-    [SDVals_UnPerm(mc,:),time_UnPerm(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r, ...
-        T,Ustr,r_,updtP,same,altMin,T_LS);
+    %updtP = 0; altMin = 0;
+    %[SDVals_UnPerm(mc,:),time_UnPerm(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r, ...
+    %    T,Ustr,r_,updtP,same,altMin,T_LS);
     %------------------------------------
     updtP = 1; altMin = 0;
     [SDVals_sLcl(mc,:), time_sLcl(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r, ...
