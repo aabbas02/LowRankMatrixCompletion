@@ -1,4 +1,4 @@
-function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uinit,r,T,Ustr,r_,updtP,same,altMin,T_LS)
+function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uinit,r,T,Ustr,r_,updtP,same,altMin,T_LS,exact)
 	% This function should implement altGDMin with both permuted and non-permuted measurements
 	% The above functionality is achieved by setting the arguments correspondingly
 	% AltGDMin wout Perm: updtP = 0, Uinit = U0, Ak_ = Ak, ykPerm_ = yk, AkCllps_ = Ak, ykCllps_ = yk
@@ -17,6 +17,7 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
     q = length(ykPerm_);
     B = zeros(r,q);
     gradU = zeros(n,r);
+    
     %if updtP && same
         yHat = zeros(m,q);
         yPerm = zeros(m,q);
@@ -27,7 +28,8 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
     if altMin 
         T_in = T_LS;
         if exact
-            A_all = vertcat(Ak_);
+            y_all = vertcat(ykPerm_);
+            M_sns = zeros(q*m,n*r);
         end
     else
         T_in = 1;
@@ -82,15 +84,22 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
                                          % row 5 matched to 1
                 idx  = M(:,1);
                 idx = start - 1  + idx;
-                for k = 1:q
-                    Ak_{k}(idx,:) = Ak_{k}(start:stop,:);                   
+                for k = 1 : q
+                   
+                    Ak_{k}(idx,:) = Ak_{k}(start:stop,:);       
+                    if exact
+                        M_sns((k-1)*m+1 : k*m,:) = B(:,l)
+                    end
                 end
             end
         end
         % U update
         if altMin && exact % U update by least - squares
-            M = kron(B')
-
+            %A_all = vertcat(Ak_);
+            %A_all = cat(1,Ak_{:});
+            %M = kron(B',A_all);
+            Uvec = M/y_all; 
+            U = reshape(Uvec,[n,r]);
         else
             X = U*B;
             if i == 1
