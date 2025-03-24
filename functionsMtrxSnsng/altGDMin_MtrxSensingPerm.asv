@@ -8,7 +8,6 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
     % Init gives U^(0), B^(0), where B^(0) is by collapsed estimate
     % Steps: min P, min U, min B
     % if t == 0, update bk by collapsed estimate, else update by full
-    
     m = size(Ak_{1}, 1);
     n = size(Ak_{1}, 2);
     SDVals = zeros(T+1,1);
@@ -27,6 +26,9 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
     %end
     if altMin 
         T_in = T_LS;
+        if exact
+            A_all = vertcat(Ak_);
+        end
     else
         T_in = 1;
     end    
@@ -86,31 +88,41 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
             end
         end
         % U update
-        X = U*B;
-        if i == 1
-            maxSigma = norm(X);
-        end
-        gradU = 0*gradU;
-        t_in = 0;
-        while t_in == 0 || t_in <= T_in && norm(gradU) >= 1e-10 % do a minimum of 1 iteration and a maximum of T_in iterations
-        %for t_in = 1:T_in
-            gradU = 0*gradU;
-            for k = 1 : q
-                gradU = gradU + Ak_{k}'*(Ak_{k}*X(:,k)-ykPerm_{k})*B(:,k)';
-            end
-            eta = 5e-1/maxSigma^2;
-            U = U - (eta/m)*gradU;
-            X = U*B;
-        %end
-        t_in = t_in + 1;
-        end
-        tStrtQR = tic;
-        [Uproj,~,~] = qr(U,'econ');
-        tQR = toc(tStrtQR);
-        if altMin
-            times(i+1) = times(i) + toc(tStart)  - tQR;
+        if altMin && exact % U update by least - squares
+            M = kron(B')
+
         else
-            times(i+1) = times(i) + toc(tStart);
+            X = U*B;
+            if i == 1
+                if altMin
+                    L = norm(Ak_{k},2)^2*norm(B,"fro")^2;
+                    eta = 1/L; 
+                else
+                    maxSigma = norm(X);
+                    eta = 1e0/(m*maxSigma^2);
+                end
+            end
+            gradU = 0*gradU;
+            t_in = 0;
+            while t_in == 0 || t_in <= T_in && norm(gradU) >= 1e-10 % do a minimum of 1 iteration and a maximum of T_in iterations
+            %for t_in = 1:T_in
+                gradU = 0*gradU;
+                for k = 1 : q
+                    gradU = gradU + Ak_{k}'*(Ak_{k}*X(:,k)-ykPerm_{k})*B(:,k)';
+                end
+                U = U - eta*gradU;
+                X = U*B;
+            %end
+                t_in = t_in + 1;
+            end
+            tStrtQR = tic;
+            [Uproj,~,~] = qr(U,'econ');
+            tQR = toc(tStrtQR);
+            if altMin
+                times(i+1) = times(i) + toc(tStart)  - tQR;
+            else
+                times(i+1) = times(i) + toc(tStart);
+            end
         end
         SDVals(i + 1) = norm( Ustr - Uproj*(Uproj'*Ustr) ,'fro' );
         if altMin == 0 %altMin = 0 means altGDMin
