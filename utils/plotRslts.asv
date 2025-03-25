@@ -6,12 +6,11 @@ function plotRslts(time_AltGDMin, SDVals_AltGDMin, ...
 
     SDVals_AltGDMin = sum(SDVals_AltGDMin,1)/MC;
     SDVals_UnPerm = sum(SDVals_UnPerm,1)/MC;
-    SDVals_AltMinExct = sum(SDVals_AltMinExct,1)/MC;   
+    SDVals_AltMin = sum(SDVals_AltMin,1)/MC;   
     SDVals_AltMin = sum(SDVals_AltMin,1)/MC;
     %---
     time_UnPerm  = sum(time_UnPerm,1)/MC;
     time_AltGDMin = sum(time_AltGDMin,1)/MC;
-    time_AltMinExct = sum(time_AltMinExct,1)/MC;
     time_AltMin = sum(time_AltMin,1)/MC;
     % SD vs iter figure
     figure;
