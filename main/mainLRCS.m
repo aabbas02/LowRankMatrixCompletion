@@ -9,12 +9,13 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-n = 500; q = 500; r = 2;
+n = 500; q = 500; r = 3;
 m = 100; numBlocks = 50;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 100;
 TAltMin = 0.5*T+1; T_LS = 200;
-MC = 100;
+MC = 25;
+same = 1; % same permutation across columns
 % generate rank-r X*
 Ustr = orth(randn(n,r));
 Bstr = randn(r,q);
@@ -32,7 +33,7 @@ SDVals_UnPerm = zeros(MC,T+1); time_UnPerm = zeros(MC,T+1);
 SDVals_sLcl = zeros(MC,T+1); time_sLcl = zeros(MC,T+1);
 SDVals_Perm = zeros(MC,T+1); time_Perm = zeros(MC,T+1);
 SDVals_AltMin = zeros(MC,TAltMin+1); time_AltMin=zeros(MC,TAltMin+1);
-same = 1;
+SDVals_AltMinExct = zeros(MC,TAltMin+1); time_AltMinExct=zeros(MC,TAltMin+1);
 for mc = 1 : MC
     if same
         pi_map = get_permutation_r(m,r_);
@@ -68,16 +69,28 @@ for mc = 1 : MC
     [SDVals_UnPerm(mc,:),time_UnPerm(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r, ...
         T,Ustr,r_,updtP,same,altMin,T_LS,exact);
     %------------------------------------
+    updtP = 0; altMin = 0; exact = 0;
+    [SDVals_UnPerm(mc,:),time_UnPerm(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r, ...
+        T,Ustr,r_,updtP,same,altMin,T_LS,exact);
+    %-------------------------------------
     updtP = 1; altMin = 0; exact = 0;
     [SDVals_sLcl(mc,:), time_sLcl(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r, ...
         T,Ustr,r_,updtP,same,altMin,T_LS,exact);
     %--------------------------------------
     updtP = 1; altMin = 1; exact = 1;
+    [SDVals_AltMinExct(mc,:), time_AltMinExct(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
+        r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact);    
+    %--------------------------------------
+    updtP = 1; altMin = 1; exact = 0;
     [SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
         r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact);
 
     mc
 end
 %---
-plotRslts(time_sLcl, SDVals_sLcl, time_UnPerm, SDVals_UnPerm, time_AltMin, SDVals_AltMin, n,q,r,m,numBlocks,MC,same,T_LS);
+plotRslts(time_sLcl, SDVals_sLcl, ...
+    time_UnPerm, SDVals_UnPerm, ...
+    time_AltMinExct,SDVals_AltMinExct,...
+    time_AltMin, SDVals_AltMin, ...
+    n,q,r,m,numBlocks,MC,same,T_LS);
   

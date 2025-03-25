@@ -113,7 +113,7 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
                     eta = 1/L; 
                 else
                     maxSigma = norm(X);
-                    eta = 1e0/(m*maxSigma^2);
+                    eta = 5e-1/(m*maxSigma^2);
                 end
             end
             gradU = 0*gradU;
@@ -138,8 +138,5 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
             end
         end
         SDVals(i + 1) = norm( Ustr - Uproj*(Uproj'*Ustr) ,'fro' );
-        %if altMin == 0 %altMin = 0 means altGDMin
-        %    U = Uproj; 
-        %end
     end
 end
