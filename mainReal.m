@@ -44,22 +44,6 @@ for mc = 1 : MC
         I_t = [];
         for i = 1 : L
            U_temp = U_t_prev - eta * stored_delta(:,:,i);
-           %{
-           % Initialize a flag to check if all row conditions are met
-           %accept_update = true; % comment this
-           % Check the norm condition for each row j in U_temp
-           %for j = 1:n
-              % Calculate norms for condition check
-              %norm_U_temp_j = norm(U_temp(j, :));
-              %norm_U_t_prev_j = norm(U_t_prev(j, :));
-              % Condition to check
-              %if norm_U_temp_j > (1 - 0.4 / (kappa_tilde^2)) *
-              %norm_U_t_prev_j + 1.4 * mu * sqrt(r / n) -
-                 %accept_update = false;
-                 %break;
-              %end
-           %end
-           %}
            nrmsTemp = sqrt(sum(U_temp.^2,2)); %norm(U_temp')
            accept_update = all(nrmsTemp <= (1 - 0.4 / (kappa_tilde^2)) *nrmsPrev + 1.4 * mu * sqrt(r / n));
            % If all conditions are met, accept the update for this node
@@ -80,32 +64,13 @@ for mc = 1 : MC
             fprintf('Elmnt Median. n = %d, q = %d, r = %d, p = %f, L = %d, L_byz = %d, C1 = %d, Attack = %d. Iter. %d, SD Error: %f\n', n,q,r,p,L,L_byz,C1, attck, t, error(2,t,mc));
         end
     end
-    %{
-    %---------------------------------------------------------
-    % GD step Sum - Standard AltGdMin for LRMC - no robustness
-    %---------------------------------------------------------
-    %stored_delta=zeros(n,r,L);
-    %for t=1:T
-    %    for i=1:L
-    %       stored_delta(:,:,i)=node_loop(nodes(i),U_t_prev,qtilde,n,r);
-    %    end
-    %    Grad_U = sum(stored_delta, 3);
-    %    U_cap=U_t_prev - eta * Grad_U;
-    %    [Q1,~] = qr(U_cap);
-    %    U_t_prev=Q1(:,(1:r));
-    %    error(1,t,mc) = subspace(Ustar,U_t_prev,n)/sqrt(r);
-    %    if mod(t,25) == 0
-    %        fprintf('Sum. Iteration %d, SD Error: %f\n', t, error(1,t,mc));
-    %    end
-    %end
-    %}
     %---------------------------------
     % GD step GM with check and attacks
     %---------------------------------
     U_t_prev = U;
     nrmsPrev = sqrt(sum(U_t_prev.^2,2));
     stored_delta=zeros(n,r,L);
-    for t=1:1*Tgm
+    for t = 1 : 1 * Tgm
         %for i=1:L
            %stored_delta(:,:,i)=node_loopNew(U_t_prev,q,n,r,rowIdx,Xcol,rows,cols);
         %end
@@ -117,22 +82,7 @@ for mc = 1 : MC
         end
         I_t = [];
         for i = 1 : L
-            U_temp = U_t_prev - eta * stored_delta(:,:,i);
-           %{
-           % Initialize a flag to check if all row conditions are met
-           %accept_update = true;
-           % Check the norm condition for each row j in U_temp
-           %for j = 1:n
-           %   % Calculate norms for condition check
-           %   norm_U_temp_j = norm(U_temp(j, :));
-           %   norm_U_t_prev_j = norm(U_t_prev(j, :));
-              % Condition to check
-           %   if norm_U_temp_j > (1 - 0.4 / (kappa_tilde^2)) * norm_U_t_prev_j + 1.4 * mu * sqrt(r / n)
-           %      accept_update = false;
-           %      break;
-           %   end
-           %end
-           %}
+           U_temp = U_t_prev - eta * stored_delta(:,:,i);
            nrmsTemp = sqrt(sum(U_temp.^2,2)); %norm(U_temp')
            accept_update = all(nrmsTemp <= (1 - 0.4 / (kappa_tilde^2)) *nrmsPrev + 1.4 * mu * sqrt(r / n));
            % If all conditions are met, accept the update for this node
@@ -169,24 +119,6 @@ for mc = 1 : MC
         I_t = [];
         for i = 1 : L
             U_temp = U_t_prev - eta * stored_delta(:,:,i);
-            %{
-    %
-    %        % Initialize a flag to check if all row conditions are met
-    %        %accept_update = true;
-    %
-    %        % Check the norm condition for each row j in U_temp
-    %        %for j = 1:n
-    %           % Calculate norms for condition check
-    %        %   norm_U_temp_j = norm(U_temp(j, :));
-    %        %   norm_U_t_prev_j = norm(U_t_prev(j, :));
-    %
-    %           % Condition to check
-    %        %   if norm_U_temp_j > (1 - 0.4 / (kappa_tilde^2)) * norm_U_t_prev_j + 1.4 * mu * sqrt(r / n)
-    %        %      accept_update = false;
-    %        %      break;
-    %        %   end
-    %        %end
-            %}
             nrmsTemp = sqrt(sum(U_temp.^2,2)); %norm(U_temp')
             accept_update = all(nrmsTemp < (1 - 0.4 / (kappa_tilde^2)) *nrmsPrev + 1.4 * mu * sqrt(r / n));
             % If all conditions are met, accept the update for this node
@@ -214,3 +146,27 @@ plotErrorMean(error_mean_MC, n, q, r, p, L, L_byz, MC, C1, attck)
 toc
 %------
 
+
+
+
+function [Ustr,X,p] = getMovieLens(r)
+    A = readmatrix("ratings100K.xlsx");
+    %--------------------
+    %load("ratings1M.mat");
+    %--------------------
+    %load("ratings10M.mat")
+    n = max(A(:,1));
+    q = max(A(:,2));
+    X = zeros(n,q);
+    num = 0;
+    disp(num)
+    for k = 1 : size(A,1)
+        i = A(k,1);
+        j = A(k,2);
+        X(i,j) = A(k,3);
+        num = num + 1;
+    end
+    p = num/(n*q);
+    [Ustr,~,~] = svds(X,r);
+    Ustr = Ustr(:,1:r);
+end
