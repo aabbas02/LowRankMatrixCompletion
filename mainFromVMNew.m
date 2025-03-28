@@ -71,7 +71,7 @@ for mc = 1 : MC
         end
         accepted_deltas = stored_delta(:,:,I_t);
         Grad_U = coordinate_wise_median(accepted_deltas);
-        U_cap=U_t_prev - eta * Grad_U;
+        U_cap = U_t_prev - eta * Grad_U;
         [Q1,~] = qr(U_cap);
         U_t_prev=Q1(:,(1:r));
         nrmsPrev = sqrt(sum(U_t_prev.^2,2));
@@ -99,7 +99,6 @@ for mc = 1 : MC
     %    end
     %end
     %}
-    %{
     %---------------------------------
     % GD step GM with check and attacks
     %---------------------------------
@@ -111,7 +110,7 @@ for mc = 1 : MC
            %stored_delta(:,:,i)=node_loopNew(U_t_prev,q,n,r,rowIdx,Xcol,rows,cols);
         %end
         stored_delta = node_loopNewWithL(U_t_prev,q,n,r,rowIdx,Ycol,L,rowsJ,Ycol_);        
-        byz_rev=byzantine_rev(L_byz,stored_delta,C1);
+        byz_rev=byzantine_rev(L_byz,stored_delta,C1,attck);
         for j=1:L_byz
             idx=randi([1,L]);
             stored_delta(:,:,idx)=byz_rev(:,:,j);
@@ -154,7 +153,6 @@ for mc = 1 : MC
              fprintf('GM.  n = %d, q = %d, r = %d, p = %f, L = %d, L_byz = %d, C1 = %d. Iteration %d, SD Error: %f\n', n,q,r,p, L,L_byz, C1, t, error(3,t,mc));
         end
     end
-    %}
     %----------------------------------
     %GD step Krum with check and attack
     %----------------------------------

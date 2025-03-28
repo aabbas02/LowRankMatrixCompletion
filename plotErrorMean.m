@@ -8,14 +8,15 @@ function plotErrorMean(error_mean_MC, n, q, r, p, L, L_byz, MC, C1,attck)
         fctr = len/40;
         T_ = 1:len;
         T_ = downsample(T_,floor(fctr));
-        semilogy(T_, error_mean_MC(2,T_), 'Color', '#0072BD', 'LineWidth', 2.5, 'DisplayName', "Elmntwise Mdn.", 'Marker', 'x', 'MarkerSize', 11);
+        semilogy(T_, error_mean_MC(2,T_), 'Color', '#0072BD', 'LineWidth', 2.25, 'DisplayName', "Elmntwise Mdn.", 'Marker', 'x', 'MarkerSize', 11);
         hold on
-        semilogy(T_, error_mean_MC(4,T_), 'Color', '#EDB120', 'LineWidth', 2.5, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
+        semilogy(T_,error_mean_MC(3,T_), 'Color', '#D95319','LineWidth',2.25, 'DisplayName',"Goemetric Mdn.",'Marker', 'o','MarkerSize', 11);
+        semilogy(T_, error_mean_MC(4,T_), 'Color', '#EDB120', 'LineWidth', 2.25, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
     else
-        semilogy(error_mean_MC(2,:), 'Color', '#0072BD', 'LineWidth', 2.5, 'DisplayName', "Elmntwise Median", 'Marker', 'x', 'MarkerSize', 11);
+        semilogy(error_mean_MC(2,:), 'Color', '#0072BD', 'LineWidth', 2.25, 'DisplayName', "Elmntwise Median", 'Marker', 'x', 'MarkerSize', 11);
         hold on;
-        %semilogy(error_mean_MC(3,:), 'Color', '#D95319','LineWidth',1.25, 'DisplayName',"Goemetric Mdn.");
-        semilogy(error_mean_MC(4,:), 'Color', '#EDB120', 'LineWidth', 2.5, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
+        semilogy(error_mean_MC(3,:), 'Color', '#D95319','LineWidth',2.25, 'DisplayName',"Goemetric Mdn.", 'Marker', 'o','MarkerSize', 11);
+        semilogy(error_mean_MC(4,:), 'Color', '#EDB120', 'LineWidth', 2.25, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
     end
     %hold on;
     %semilogy(error_mean_MC(3,:), 'Color', '#D95319','LineWidth',1.25, 'DisplayName',"Goemetric Mdn.");
