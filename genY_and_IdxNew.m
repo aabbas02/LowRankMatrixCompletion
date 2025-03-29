@@ -1,7 +1,6 @@
 function [Y,Ycol,rowIdx,Ycol_,rowsJ] = genY_and_IdxNew(Xstar, p, numWrkrs)
     [n, q] = size(Xstar);
     Y = zeros(n, q);  % Initialize Y as a zero matrix
-    
 	idx = randperm(n*q);
 	idx = idx(1:round(p*n*q));
 	%idxC = setdiff(1:n*q,idx);
@@ -13,10 +12,6 @@ function [Y,Ycol,rowIdx,Ycol_,rowsJ] = genY_and_IdxNew(Xstar, p, numWrkrs)
     for k = 1 : q
 		rowIdx{k} = row(col==k);
 		Ycol{k} =  Xstar(rowIdx{k},k);
-		%if k <= n
-		%	colIdx{k} = col(row==k);
-		%	Xrow{k} = X(k,colIdx{k})';
-		%end
 		Y(rowIdx{k},k) = Xstar(rowIdx{k},k);
     end
     Ycol_ = cell(numWrkrs,q/numWrkrs);

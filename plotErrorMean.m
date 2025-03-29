@@ -1,22 +1,41 @@
-function plotErrorMean(error_mean_MC, n, q, r, p, L, L_byz, MC, C1,attck)
+function plotErrorMean(error_mean_MC, n, q, r, p, L, L_byz, MC, C1,attck,real)
     % Create a figure
     figure;
     % Plot the errors
     %semilogy(error_mean_MC(1,:), 'Color', "#7E2F8E",'LineWidth',1.25,'DisplayName',"Sum (No Attack)");
     len = length(error_mean_MC(2,:));
-    if len > 40
-        fctr = len/40;
-        T_ = 1:len;
-        T_ = downsample(T_,floor(fctr));
-        semilogy(T_, error_mean_MC(2,T_), 'Color', '#0072BD', 'LineWidth', 2.25, 'DisplayName', "Elmntwise Mdn.", 'Marker', 'x', 'MarkerSize', 11);
-        hold on
-        semilogy(T_,error_mean_MC(3,T_), 'Color', '#D95319','LineWidth',2.25, 'DisplayName',"Goemetric Mdn.",'Marker', 'o','MarkerSize', 11);
-        semilogy(T_, error_mean_MC(4,T_), 'Color', '#EDB120', 'LineWidth', 2.25, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
+    if real == 0
+        if len > 40
+            fctr = len/40;
+            T_ = 1:len;
+            T_ = downsample(T_,floor(fctr));
+            semilogy(T_, error_mean_MC(2,T_), 'Color', '#0072BD', 'LineWidth', 2.25, 'DisplayName', "Elmntwise Mdn.", 'Marker', 'x', 'MarkerSize', 11);
+            hold on
+            semilogy(T_,error_mean_MC(3,T_), 'Color', '#D95319','LineWidth',2.25, 'DisplayName',"Goemetric Mdn.",'Marker', 'o','MarkerSize', 11);
+            semilogy(T_, error_mean_MC(4,T_), 'Color', '#EDB120', 'LineWidth', 2.25, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
+        else
+            semilogy(error_mean_MC(2,:), 'Color', '#0072BD', 'LineWidth', 2.25, 'DisplayName', "Elmntwise Median", 'Marker', 'x', 'MarkerSize', 11);
+            hold on;
+            semilogy(error_mean_MC(3,:), 'Color', '#D95319','LineWidth',2.25, 'DisplayName',"Goemetric Mdn.", 'Marker', 'o','MarkerSize', 11);
+            semilogy(error_mean_MC(4,:), 'Color', '#EDB120', 'LineWidth', 2.25, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
+        end
+        ylabel('$\mathrm{SD}(U^{(t)},U^*)$', 'Interpreter', 'Latex','FontSize',14);    
     else
-        semilogy(error_mean_MC(2,:), 'Color', '#0072BD', 'LineWidth', 2.25, 'DisplayName', "Elmntwise Median", 'Marker', 'x', 'MarkerSize', 11);
-        hold on;
-        semilogy(error_mean_MC(3,:), 'Color', '#D95319','LineWidth',2.25, 'DisplayName',"Goemetric Mdn.", 'Marker', 'o','MarkerSize', 11);
-        semilogy(error_mean_MC(4,:), 'Color', '#EDB120', 'LineWidth', 2.25, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
+        if len > 40
+            fctr = len/40;
+            T_ = 1:len;
+            T_ = downsample(T_,floor(fctr));
+            plot(T_, error_mean_MC(2,T_), 'Color', '#0072BD', 'LineWidth', 2.25, 'DisplayName', "Elmntwise Mdn.", 'Marker', 'x', 'MarkerSize', 11);
+            hold on
+            plot(T_,error_mean_MC(3,T_), 'Color', '#D95319','LineWidth',2.25, 'DisplayName',"Goemetric Mdn.",'Marker', 'o','MarkerSize', 11);
+            plot(T_, error_mean_MC(4,T_), 'Color', '#EDB120', 'LineWidth', 2.25, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
+        else
+            plot(error_mean_MC(2,:), 'Color', '#0072BD', 'LineWidth', 2.25, 'DisplayName', "Elmntwise Median", 'Marker', 'x', 'MarkerSize', 11);
+            hold on;
+            plot(error_mean_MC(3,:), 'Color', '#D95319','LineWidth',2.25, 'DisplayName',"Goemetric Mdn.", 'Marker', 'o','MarkerSize', 11);
+            plot(error_mean_MC(4,:), 'Color', '#EDB120', 'LineWidth', 2.25, 'DisplayName', "Krum",'Marker', 'square', 'MarkerSize', 11);
+        end
+            ylabel('Relative Error', 'Interpreter', 'Latex','FontSize',14);        
     end
     %hold on;
     %semilogy(error_mean_MC(3,:), 'Color', '#D95319','LineWidth',1.25, 'DisplayName',"Goemetric Mdn.");
@@ -26,7 +45,6 @@ function plotErrorMean(error_mean_MC, n, q, r, p, L, L_byz, MC, C1,attck)
     grid("on")
     % Set the title with dynamic parameters
     xlabel('Iterations $t$', 'Interpreter', 'Latex','FontSize',14);
-    ylabel('$\mathrm{SD}(U^{(t)},U^*)$', 'Interpreter', 'Latex','FontSize',14);
     title(["$n = $ " + n + ", $ q = $" + q + ...
            "$, r = $ " + r + ", $ p = $ " + p + ...
            "$, L = $ " + L + ", $L_{byz} = $ " + L_byz + ...
