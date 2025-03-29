@@ -17,7 +17,7 @@ Bstar = randn(r, q);
 Xstar = Ustar * Bstar;
 [~,sigma,~] = svds(Xstar,r);
 kappa_tilde = sigma(1,1)/sigma(r,r);
-MC = 101;
+MC = 1;
 error = zeros(4,Telem,MC);
 for mc = 1 : MC
     % Generate Y and S
@@ -210,7 +210,8 @@ for mc = 1 : MC
     mc
 end
 error_mean_MC = mean(error,3);
-plotErrorMean(error_mean_MC, n, q, r, p, L, L_byz, MC, C1, attck)
+real = 0;
+plotErrorMean(error_mean_MC, n, q, r, p, L, L_byz, MC, C1, attck,real)
 toc
 %------
 
