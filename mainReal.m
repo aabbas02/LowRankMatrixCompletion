@@ -162,11 +162,10 @@ end
 function [Ustr,X,p] = getMovieLens(r)
     %A = readmatrix("ratings100K.xlsx");
     %--------------------
-    load("ratings1M.mat");
-    A = ratings1M;
+    %load("ratings1M.mat");
+    %A = ratings1M;
     %--------------------
-    %load("ratings10M.mat")
-    %A = ratings10M;
+    load("ratings10M.mat")
     n = max(A(:,1));
     q = max(A(:,2));
     X = zeros(n,q);
@@ -209,11 +208,19 @@ function [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx, Xcol_,rowsJ] = processMatrix(X
     for j = 1 : q
         rowIdx{j} = row(col == j);
         Xcol{j} = X(rowIdx{j}, j);
+        if mod(j,1000) == 0
+            j
+        end
     end
+    disp("cols done")
     for j = 1 : n
         colIdx{j} = col(row == j);
-        Xrow{j} = X(j, colIdx{j})';        
+        Xrow{j} = X(j, colIdx{j})';       
+        if mod(j,1000) == 0
+            j
+        end        
     end
+    disp("rows done")
     Xcol_ = cell(L,q/L);  
     rowsJ = reshape(rowIdx,[q/L,L]);
     rowsJ = rowsJ';    
