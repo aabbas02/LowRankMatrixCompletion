@@ -3,24 +3,21 @@ tic
 clear all
 close all
 clc
-r = 2;  % rank
+r = 3;  % rank
 Telem = 1000;  % number of iterations
 Tgm = 1000;
 mu = 2;  % parameter for projection operator
-attck = 0;
+attck = 1;
 L = 20;   % number of nodes
 L_byz = 8;
 C1 = 1e0;
 MC = 1;
 error = zeros(4,Telem,MC);
-errorX = zeros(4,Telem,MC);
-for mc = 1 : MC
-    % Generate Y and S
-    %[Y,Ycol,rowIdx,Ycol_,rowsJ] = genY_and_IdxNew(Xstar, p, L);
-    %[~,sigma,~] = svds(Xstar,r);
-    %kappa_tilde = sigma(1,1)/sigma(r,r);
-    
-    %[Ustar,Y,p] = getMovieLens(r);
+C_elem = 10; 
+C_gm = 10;
+C_krum = 10;
+for mc = 1 : MC    
+    [Ustar,Y,p] = getMovieLens(r);
     real = 1; idxFlag = 0; 
     [Y, rowIdx, ~, Ycol, ~,idx, Ycol_,rowsJ] = processMatrix(Y,p,real,idxFlag,L);
     %load('data10M.mat'); disp('done'); p = length(idx)/(n*q);
@@ -28,7 +25,10 @@ for mc = 1 : MC
     [U0_init,S1,~] = svds(Y/p,r);
     kappa_tilde = S1(1,1)/S1(r,r);    
     U = U0_init(:,1:r);
-    eta = 10/(S1(1,1)^2*p);
+    eta_elem = C_elem/(S1(1,1)^2*p);
+    eta_gm = C_gm/(S1(1,1)^2*p);
+    eta_krum = C_krum/(S1(1,1)^2*p);
+    
     %--------------------------------------------------------
     % GD step element wise median
     %----------------------------------------------------------
@@ -43,18 +43,19 @@ for mc = 1 : MC
         end
         I_t = [];
         for i = 1 : L
-           U_temp = U_t_prev - eta * stored_delta(:,:,i);
+           U_temp = U_t_prev - eta_elem * stored_delta(:,:,i);
            nrmsTemp = sqrt(sum(U_temp.^2,2)); %norm(U_temp')
            accept_update = all(nrmsTemp <= (1 - 0.4 / (kappa_tilde^2)) *nrmsPrev + 1.4 * mu * sqrt(r / n));
            if accept_update
               I_t = [I_t, i];  % Add index i to the set I_t
            else
-              fprintf('Idx %d. Node %d rejected based on norm condition.\n', idx, i);
+              if mod(t,100) == 0
+              fprintf('Elem. Node %d rejected based on norm condition.\n', idx, i);
            end   
         end
         accepted_deltas = stored_delta(:,:,I_t);
         Grad_U = coordinate_wise_median(accepted_deltas);
-        U_cap = U_t_prev - eta * Grad_U;
+        U_cap = U_t_prev - eta_elem * Grad_U;
         [Q1,~] = qr(U_cap);
         U_t_prev=Q1(:,(1:r));
         nrmsPrev = sqrt(sum(U_t_prev.^2,2));
@@ -67,7 +68,6 @@ for mc = 1 : MC
     %---------------------------------
     % GD step GM with check and attacks
     %---------------------------------
-    %{
     U_t_prev = U;
     nrmsPrev = sqrt(sum(U_t_prev.^2,2));
     for t = 1 : 1 * Tgm
@@ -80,19 +80,19 @@ for mc = 1 : MC
         end
         I_t = [];
         for i = 1 : L
-           U_temp = U_t_prev - eta * stored_delta(:,:,i);
+           U_temp = U_t_prev - eta_gm * stored_delta(:,:,i);
            nrmsTemp = sqrt(sum(U_temp.^2,2)); %norm(U_temp')
            accept_update = all(nrmsTemp <= (1 - 0.4 / (kappa_tilde^2)) *nrmsPrev + 0.4 * mu * sqrt(r / n));
            % If all conditions are met, accept the update for this node
            if accept_update
               I_t = [I_t, i];  % Add index i to the set I_t
            else
-              fprintf('Idx %d. Node %d rejected based on norm condition.\n', idx, i);
+              fprintf('GM. Node %d rejected based on norm condition.\n', idx, i);
            end   
         end
         accepted_deltas = stored_delta(:,:,I_t);
         Grad_U = do_gm_vec(accepted_deltas);
-        U_cap=U_t_prev - eta * Grad_U;
+        U_cap=U_t_prev - eta_gm * Grad_U;
         [Q1,~] = qr(U_cap);
         U_t_prev=Q1(:,(1:r));
         nrmsPrev = sqrt(sum(U_t_prev.^2,2));
@@ -102,7 +102,6 @@ for mc = 1 : MC
              fprintf('GM.  n = %d, q = %d, r = %d, p = %f, L = %d, L_byz = %d, C1 = %d. Iteration %d, Rel. Error: %f\n', n,q,r,p, L,L_byz, C1, t, error(3,t,mc));
         end
     end
-    %}
     %----------------------------------
     %GD step Krum with check and attack
     %----------------------------------
@@ -117,19 +116,19 @@ for mc = 1 : MC
         end
         I_t = [];
         for i = 1 : L
-            U_temp = U_t_prev - eta * stored_delta(:,:,i);
+            U_temp = U_t_prev - eta_krum * stored_delta(:,:,i);
             nrmsTemp = sqrt(sum(U_temp.^2,2)); %norm(U_temp')
             accept_update = all(nrmsTemp < (1 - 0.4 / (kappa_tilde^2)) *nrmsPrev + 1.4 * mu * sqrt(r / n));
             % If all conditions are met, accept the update for this node
             if accept_update
                 I_t = [I_t, i];  % Add index i to the set I_t
             else
-                fprintf('Idx %d. Node %d rejected based on norm condition.\n', idx, i);
+                fprintf('Krum. Node %d rejected based on norm condition.\n', idx, i);
             end
         end
          accepted_deltas = stored_delta(:,:,I_t);
          Grad_U = krum(accepted_deltas, L_byz);
-         U_cap=U_t_prev - eta * Grad_U;
+         U_cap=U_t_prev - eta_krum * Grad_U;
          [Q1,~] = qr(U_cap);
          U_t_prev=Q1(:,(1:r));
          nrmsPrev = sqrt(sum(U_t_prev.^2,2));
@@ -161,10 +160,10 @@ function [err] = getErr(U,r,q,numWrkrs,rowsJ,Xcol_,Y,idx)
 end
 %-------------
 function [Ustr,X,p] = getMovieLens(r)
-    %A = readmatrix("ratings100K.xlsx");
+    A = readmatrix("ratings100K.xlsx");
     %--------------------
-    load("ratings1M.mat");
-    A = ratings1M;
+    %load("ratings1M.mat");
+    %A = ratings1M;
     %--------------------
     %load("ratings10M.mat")
     n = max(A(:,1));
