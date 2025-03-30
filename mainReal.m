@@ -23,6 +23,7 @@ for mc = 1 : MC
     [Ustar,Y,p] = getMovieLens(r);
     real = 1; idxFlag = 0; 
     [Y, rowIdx, ~, Ycol, ~,idx, Ycol_,rowsJ] = processMatrix(Y,p,real,idxFlag,L);
+    %load('data10M.mat'); disp('done'); p = length(idx)/(n*q);
     n = size(Y,1); q = size(Y,2);    
     [U0_init,S1,~] = svds(Y/p,r);
     kappa_tilde = S1(1,1)/S1(r,r);    
@@ -66,7 +67,6 @@ for mc = 1 : MC
     %---------------------------------
     % GD step GM with check and attacks
     %---------------------------------
-    %{
     U_t_prev = U;
     nrmsPrev = sqrt(sum(U_t_prev.^2,2));
     for t = 1 : 1 * Tgm
@@ -101,7 +101,6 @@ for mc = 1 : MC
              fprintf('GM.  n = %d, q = %d, r = %d, p = %f, L = %d, L_byz = %d, C1 = %d. Iteration %d, Rel. Error: %f\n', n,q,r,p, L,L_byz, C1, t, error(3,t,mc));
         end
     end
-    %}
     %----------------------------------
     %GD step Krum with check and attack
     %----------------------------------
@@ -162,10 +161,10 @@ end
 function [Ustr,X,p] = getMovieLens(r)
     %A = readmatrix("ratings100K.xlsx");
     %--------------------
-    %load("ratings1M.mat");
-    %A = ratings1M;
+    load("ratings1M.mat");
+    A = ratings1M;
     %--------------------
-    load("ratings10M.mat")
+    %load("ratings10M.mat")
     n = max(A(:,1));
     q = max(A(:,2));
     X = zeros(n,q);

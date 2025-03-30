@@ -3,7 +3,7 @@ tic
 clear all
 close all
 clc
-r = 5;  % rank
+r = 2;  % rank
 Telem = 1000;  % number of iterations
 Tgm = 1000;
 mu = 2;  % parameter for projection operator
@@ -20,14 +20,15 @@ for mc = 1 : MC
     %[~,sigma,~] = svds(Xstar,r);
     %kappa_tilde = sigma(1,1)/sigma(r,r);
     
-    [Ustar,Y,p] = getMovieLens(r);
+    %[Ustar,Y,p] = getMovieLens(r);
     real = 1; idxFlag = 0; 
     [Y, rowIdx, ~, Ycol, ~,idx, Ycol_,rowsJ] = processMatrix(Y,p,real,idxFlag,L);
+    %load('data10M.mat'); disp('done'); p = length(idx)/(n*q);
     n = size(Y,1); q = size(Y,2);    
     [U0_init,S1,~] = svds(Y/p,r);
     kappa_tilde = S1(1,1)/S1(r,r);    
     U = U0_init(:,1:r);
-    eta = 1/(S1(1,1)^2*p);
+    eta = 10/(S1(1,1)^2*p);
     %--------------------------------------------------------
     % GD step element wise median
     %----------------------------------------------------------
@@ -162,11 +163,10 @@ end
 function [Ustr,X,p] = getMovieLens(r)
     %A = readmatrix("ratings100K.xlsx");
     %--------------------
-    %load("ratings1M.mat");
-    %A = ratings1M;
+    load("ratings1M.mat");
+    A = ratings1M;
     %--------------------
     %load("ratings10M.mat")
-    %A = ratings10M;
     n = max(A(:,1));
     q = max(A(:,2));
     X = zeros(n,q);
@@ -178,7 +178,7 @@ function [Ustr,X,p] = getMovieLens(r)
         num = num + 1;
     end
     p = num/(n*q);
-    X = X';
+    %X = X';
     [Ustr,~,~] = svds(X,r);
     Ustr = Ustr(:,1:r);
 end
@@ -209,11 +209,19 @@ function [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx, Xcol_,rowsJ] = processMatrix(X
     for j = 1 : q
         rowIdx{j} = row(col == j);
         Xcol{j} = X(rowIdx{j}, j);
+        if mod(j,1000) == 0
+            j
+        end
     end
+    disp("cols done")
     for j = 1 : n
         colIdx{j} = col(row == j);
-        Xrow{j} = X(j, colIdx{j})';        
+        Xrow{j} = X(j, colIdx{j})';       
+        if mod(j,1000) == 0
+            j
+        end        
     end
+    disp("rows done")
     Xcol_ = cell(L,q/L);  
     rowsJ = reshape(rowIdx,[q/L,L]);
     rowsJ = rowsJ';    
