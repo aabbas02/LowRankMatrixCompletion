@@ -57,7 +57,7 @@ for mc = 1 : MC
         MCllps(:, k) = AkCllps_{k}'*ykCllps_{k};
     end
     [U0,~,~,] = svd(M,"econ");
-    U0 = U0(:,1:r); %hahaha
+    U0 = U0(:,1:r); 
     %-----------------------------------
     [U0Cllps,~,~] = svd(MCllps,"econ");
     U0Cllps = U0Cllps(:,1:r);
