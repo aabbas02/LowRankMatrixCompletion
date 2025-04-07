@@ -9,7 +9,7 @@ addpath(genpath('.\utils'));
 cd(dir)    
 tic
 %---------------------------------
-r = 5;
+r = 3;
 real = 0;
 T = 10000;
 n = 1000;
@@ -29,7 +29,7 @@ else
     Bstr = randn(r,q);
     X  = Ustr*Bstr;
 end
-numBlocksTry_ = 10:1:15;
+numBlocksTry_ = 5:1:15;
 %-------------------------------
 % The unadorned SDU0 (or X0Err) are from the svd. SDU0_ and X0Err_ are from
 % subequent iterations of minimizing the collapsed objective.

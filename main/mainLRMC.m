@@ -18,7 +18,7 @@ n = 1000;
 q = 1000;
 p = 0.1;
 same = 0;
-MC = 25;
+MC = 1;
 %------------------------
 if real
     [Ustr,X,p] = getMovieLens(r);
@@ -116,7 +116,7 @@ function [XzerosPerm, XzerosCllps,r_cell] = processBlocks(rowIdx, Xcol, Xzeros, 
 end
 
 
-function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T,T_init,T_LS)
+function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T,T_init,T_LS,eta_c)
     figure;
     %hold on
     %if real == 0

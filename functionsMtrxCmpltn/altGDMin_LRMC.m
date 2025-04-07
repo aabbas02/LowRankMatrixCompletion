@@ -1,12 +1,12 @@
-function [SDVals,objVals] = altGDMinWithP_LRMC(n,q,r,r_,p,Uinit, ...
+function [SDVals,objVals] = altGDMin_LRMC(n,q,r,r_,p,Uinit, ...
                                         Ustr,T, ...
                                         rowIdx,Xcol,colIdx,Xrow, Xhat0,idx,Xzeros,real,B_init)
     % Given U^{(0)}, B^{(0)}
     % Update P_j for all j in [q]. This is to to update rowIdx{j}
     % Update b_j for all j in [q]. This is a least-squares problem with
     % P_jU as the sensing matrix.
-    % Update U by gradient descent
-
+    % Update U by gradient descent - Why is this easier than updating U by
+    % least-squares?
     V = B_init;
     U = Uinit;
     gradU = zeros(n,r);
@@ -26,7 +26,7 @@ function [SDVals,objVals] = altGDMinWithP_LRMC(n,q,r,r_,p,Uinit, ...
         for j = 1 : q
             xHat = U(rowIdx{j},:)*V(:,j);
             %[~,idx1] = sort(xHat);
-            %[~,idx2] = sort(Xcol{j}); % makre sure this does not do an in-place sort
+            %[~,idx2] = sort(Xcol{j}); % make sure this does not do an in-place sort
             %rowIdx{j}(idx2) = rowIdx{j}(idx1);
             for s = 1 : length(r_{j})
                 start = sum(r_{j}(1:s)) - r_{j}(s) + 1;

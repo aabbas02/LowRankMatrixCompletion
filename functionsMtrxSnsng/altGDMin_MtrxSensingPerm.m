@@ -1,4 +1,4 @@
-function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uinit,r,T,Ustr,r_,updtP,same,altMin,T_LS,exact)
+function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps_,Uinit,r,T,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c)
 	% This function should implement altGDMin with both permuted and non-permuted measurements
 	% The above functionality is achieved by setting the arguments correspondingly
 	% AltGDMin wout Perm: updtP = 0, Uinit = U0, Ak_ = Ak, ykPerm_ = yk, AkCllps_ = Ak, ykCllps_ = yk
@@ -113,7 +113,7 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
                     eta = 1/L; 
                 else
                     maxSigma = norm(X);
-                    eta = 5e-1/(m*maxSigma^2);
+                    eta = eta_c/(m*maxSigma^2);
                 end
             end
             gradU = 0*gradU;
