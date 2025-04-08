@@ -1,4 +1,4 @@
-function plotRslts(SDU0, SDU0Cllps, SDU0Cllps_, SDU0Perm,n,q,r,p,numBlocks_,MC,same,fill,real,T)
+function plotRsltsLRMC(SDU0, SDU0Cllps, SDU0Cllps_, SDU0Perm,n,q,r,p,numBlocks_,MC,same,fill,real,T)
     figure;
     hold on
     if real == 0
@@ -9,8 +9,8 @@ function plotRslts(SDU0, SDU0Cllps, SDU0Cllps_, SDU0Perm,n,q,r,p,numBlocks_,MC,s
     %    'DisplayName', 'SDVals Cllps', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
     plot(numBlocks_,SDU0Cllps_, ...
         'DisplayName', 'SDVals Cllps Mean Only', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    plot(numBlocks_,SDU0Perm, ...
-        'DisplayName', 'SDVals Naive', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
+    %plot(numBlocks_,SDU0Perm, ...
+    %    'DisplayName', 'SDVals Naive', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
     grid("on")
     xticks(numBlocks_);
     %-------------------------------

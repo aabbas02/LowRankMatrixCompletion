@@ -11,9 +11,7 @@ tic
 %---------------------------------
 r = 3;
 real = 0;
-T_init = 100;
-T_LS = 25;
-T = 200;
+T = 3000;
 n = 1000;
 q = 1000;
 p = 0.1;
@@ -31,126 +29,118 @@ else
     Bstr = randn(r,q);
     X  = Ustr*Bstr;
 end
-numBlocksTry_ = [25];
-SDValsAltGDMin = zeros(MC,T+1);
+numBlocksTry_ = 10;
 %-------------------------------
-fill = "mean";
-%fill = "median";
-%fill = "both";
+% The unadorned SDU0 (or X0Err) are from the svd. SDU0_ and X0Err_ are from
+% subequent iterations of minimizing the collapsed objective.
+SDU0Init = zeros(length(numBlocksTry_),MC); SDU0_ = zeros(length(numBlocksTry_),MC);
+SDU0CllpsInit = zeros(length(numBlocksTry_),MC);  SDU0Cllps_ = zeros(length(numBlocksTry_),MC); 
+SDU0Perm = zeros(length(numBlocksTry_),MC); SDU0Perm_ = zeros(length(numBlocksTry_),MC);
+X0Err = zeros(length(numBlocksTry_),MC); X0Err_ = zeros(length(numBlocksTry_),MC);
+X0CllpsErr = zeros(length(numBlocksTry_),MC); X0CllpsErr_ = zeros(length(numBlocksTry_),MC);
+X0PermErr = zeros(length(numBlocksTry_),MC);  X0PermErr_ = zeros(length(numBlocksTry_),MC);
+%fill = "sum"; %fill = "median"; %fill = "both";
+fill = "one";
+%fill = "mean";
 %-----------------------
-if real % ground truth matrix read only once if the data ar real
-    idxFlag = 1;
-    [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real,idxFlag,0);
+if real % ground truth matrix read only once if the data are real
+    idxFlag = 1; % idxFlag = 1 means generate indices for synthetic data  
+    [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real,idxFlag,'idxPlaceholder');
 end
 for i = 1 : length(numBlocksTry_)
     numBlocksTry = numBlocksTry_(i);
     for mc = 1 : MC
-        if real == 0 % new matrix generated at every mc run only if synthetic data
-            idxFlag = 1;
-            [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real,idxFlag,0);    
+        if real == 0 % new matrix generated at every mc run only if synthetic data, for real data MC = 1 always
+            idxFlag = 1; 
+            [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real,idxFlag,'idxPlaceHolder');    
         end
-        [XzerosPerm, XzerosCllps,r_] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill);  
-        idxFlag = 0;
+        % Collapsed
+        [XzerosPerm, XzerosCllps, r_All] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill); 
+        % Method 1. U0 from unpermuted
+        %[U0, S0, V0] = svds(Xzeros,r);
+        %SDU0Init(i,mc) = norm(Ustr - U0*(U0'*Ustr));        
+        %X0 = U0*S0*V0';
+        %X0Err(i,mc) = norm(X0(idx) - Xzeros(idx))/norm(Xzeros(idx));
+        % U0 from unpermuted plus iterations
+        %P_updt = 0;
+        %[SDVals,Errs] = altGDMin_LRMC(n,q,r,'r_PlaceHolder',p,U0, ...
+        %                              Ustr,T, ...
+        %                              rowIdx,Xcol,colIdx,Xrow, X0,idx,Xzeros,real, P_updt);        
+        %SDU0_(i,mc) = SDVals(end);   
+        %X0Err_(i,mc) = Errs(end);  
+        %if real
+        %    Ustr = U0;
+        %end
+        %{
+        %------------------------------------
+        % Method 2. U0 from cllps
+        [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);
+        U0Cllps = U0Cllps(:,1:r); S0Cllps = S0Cllps(1:r,1:r); V0Cllps = V0Cllps(:,1:r);
+        X0Cllps = U0Cllps*S0Cllps*V0Cllps';
+        X0CllpsErr(i,mc) = norm(X0Cllps(idx) - Xzeros(idx))/norm(Xzeros(idx));
+        SDU0Cllps(i,mc) = norm(Ustr - U0Cllps*(U0Cllps'*Ustr));
+        % U0 from cllps matrix plus iterations
+        idxFlag = 0; 
         [XzerosCllps, rowIdxCllps, colIdxCllps, XcolCllps, XrowCllps,~] = processMatrix(XzerosCllps, n, q, p,real,idxFlag,idx);
-        [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);        
-        Pupdt = 0;
-        [SDVals,~,U_init,B_init] = altMinInit_LRMC(n,q, r, U0Cllps, Ustr, T_init, ...
-                                                   rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
-                                                   U0Cllps*S0Cllps*V0Cllps',idx,XzerosCllps,real,Pupdt);
-        SDVals
-        
-        X_init = U_init*B_init;
-        [~, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);
-        [SDValsAltGDMin(mc,:),Errs] = altGDMin_LRMC(n,q, r,r_,p, U_init, Ustr, T, ...
-                                        rowIdxPerm, XcolPerm, colIdxPerm, XrowPerm, ...
-                                        X_init,idx,XzerosPerm,real,B_init,T_LS);        
+        [SDVals,Errs] = altMinwithP_LRMC(n,q, r, U0Cllps, Ustr, T, ...
+                                       rowIdxCllps, XcolCllps, colIdxCllps, XrowCllps, ...
+                                       X0Cllps,idx,Xzeros,real);
+        X0CllpsErr_(i,mc) = Errs(end);
+        SDU0Cllps_(i,mc) = SDVals(end);  
+        % Method 3. U0 from permuted matrix
+        [U0Perm, S0Perm, V0Perm] = svds(XzerosPerm,r);
+        U0Perm = U0Perm(:,1:r);        S0Perm = S0Perm(1:r,1:r);        V0Perm = V0Perm(:,1:r);
+        X0Perm = U0Perm*S0Perm*V0Perm';        
+        X0PermErr(i,mc) = norm(X0Perm(idx) - Xzeros(idx))/norm(Xzeros(idx));
+        SDU0Perm(i,mc) = norm(Ustr - U0Perm*(U0Perm'*Ustr));    
+        % U0 from permuted matrix plus iterations        
+        idxFlag = 0;
+        [XzerosPerm, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);        
+        [SDVals,Errs] = altMinInit_LRMC(n,q, r, U0Perm, Ustr, T, ...
+                                       rowIdxPerm, XcolPerm, colIdxPerm, XrowPerm, ...
+                                       X0Perm,idx,Xzeros,real);
+        X0PermErr_(i,mc) = Errs(end);    
+        SDU0Perm_(i,mc) = SDVals(end);
+        %}
+        [U0Cllps, S0Cllps, V0Cllps] = svds(XzerosCllps,r);
+        X0Cllps = U0Cllps*S0Cllps*V0Cllps';
+        X0CllpsErr(i,mc) = norm(X0Cllps(idx) - Xzeros(idx))/norm(Xzeros(idx));
+        [Uproj,~,~] = qr(U0Cllps,'econ');
+        idxFlag = 0;
+        [XzerosPerm, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);
+        [SDVals,objVals,U0Cllps] = minCllpsInit(n,q,r,r_All,U0Cllps, ...
+                                        Ustr,Bstr,T, ...
+                                        rowIdxPerm,XcolPerm, 'zero','zero','zero',0);
+        SDU0CllpsInit(i,mc) = norm(Ustr - U0Cllps*(U0Cllps'*Ustr));
+        P_updt = 1;
+        T = 0;
+        [SDVals,Errs] = altGDMin_LRMC(n,q,r,r_All,p,U0Cllps, ...
+                                      Ustr,T, ...
+                                      rowIdxPerm,XcolPerm,colIdx,Xrow, X0Cllps,idx,XzerosPerm,real,P_updt);                
+        SDU0Cllps_(i,mc) = SDVals(end);        
         mc
     end
 end
-SDValsAltGDMin = sum(SDValsAltGDMin,1)/MC;
-if real == 0
-    plotRslts(SDValsAltGDMin,n,q,r,p,numBlocksTry_(1),MC,same,fill,real,T,T_init,T_LS);
-end
-
-function [XzerosPerm, XzerosCllps,r_cell] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill)
-    % Initialize output variables
-    XzerosPerm = Xzeros;
-    rowIdxPerm = cell(q,1);
-    XcolPerm = cell(q, 1); 
-    r_cell = cell(q,1);
-    XzerosCllps = Xzeros;
-    for k = 1 : q
-
-        l_k = length(rowIdx{k});
-        numBlocks = min(numBlocksTry, l_k);
-        r_ = floor(l_k / numBlocks) * ones(numBlocks, 1);
-        
-        if mod(l_k, numBlocks) > 0
-            r_(end) = r_(end) + l_k - floor(l_k / numBlocks) * numBlocks;
-        end
-        r_cell{k} = r_;
-        if ~same
-            pi_map = get_permutation_r(l_k, r_);
-        else
-            pi_map = 1:l_k; % Identity mapping if 'same' is true
-        end
-        
-        rowIdxPerm{k} = rowIdx{k}(pi_map);
-        XcolPerm{k} = Xzeros(rowIdxPerm{k}, k);
-        XzerosPerm(rowIdxPerm{k}, k) = Xcol{k};
-        
-        for s = 1:numBlocks
-            start = sum(r_(1:s)) - r_(s) + 1;
-            stop = start + r_(s) - 1;
-            if fill == "mean"
-                avg = sum(XcolPerm{k}(start:stop)) / r_(s);
-                XzerosCllps(rowIdxPerm{k}(start:stop), k) = avg;
-            elseif fill == "median"
-                XzerosCllps(rowIdxPerm{k}(start:stop), k) = median(XcolPerm{k}(start:stop));
-            else
-                XzerosCllps(rowIdxPerm{k}(start:stop), k) = sum(XcolPerm{k}(start:stop)) / r_(s);
-                XzerosCllps(rowIdxPerm{k}(floor(start + (stop - start) / 2):stop), k) = median(XcolPerm{k}(start:stop));
-            end
-        end
-    end
-end
-
-
-function plotRslts(SDAltGDMin,n,q,r,p,numBlocks,MC,same,fill,real,T,T_init,T_LS,eta_c)
-    figure;
-    %hold on
-    %if real == 0
-    %plot(numBlocks_,SDU0, ...
-    %    'DisplayName', 'SDVals Unperm', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    %end
-    %plot(numBlocks_,SDU0Cllps, ...
-    %    'DisplayName', 'SDVals Cllps', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    %plot(numBlocks_,SDU0Cllps_, ...
-    %    'DisplayName', 'SDVals Cllps Mean Only', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    semilogy(SDAltGDMin, ...
-        'DisplayName', 'SDVals AltMin', 'LineWidth', 1.45, 'Marker', 'o', 'MarkerSize', 7);
-    grid("on")
-    %-------------------------------
-    title("LRMC. n = " + n + ", q = " + q +...
-          ", r = " + r + ", p = " + p  +  ", MC = " + MC + ", same = " + same + ", fill = " + fill + ", T = " + T + ", num Blocks = " + numBlocks,...
-          'Interpreter', 'Latex', 'FontSize',11);
-    %--------------------------------
-    legend('Interpreter', 'Latex', 'Fontsize', 9);
-    if real == 0
-        ylabel("$SD(U^{(t)},U^*)$","FontSize",14,'Interpreter','Latex')
-    else
-        ylabel("Initialization Error", "FontSize",11,"Interpreter","Latex")
-    end
-    xlabel('Iterations t', 'FontSize',14, 'Interpreter','Latex')
-    stringTitle = ['LRMC_AltMinbyGD', num2str(MC), ...
-                   '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), '_p_',...
-                   num2str(p),'_numBlocks_', num2str((numBlocks)), '_same_',num2str(same),...
-                   '_fill_',num2str(fill), '_T_',num2str(T), '_T_init_',num2str(T_init),...
-                   '_T_LS_',num2str(T_LS)];
-    
-    savefig([stringTitle, '.fig']);
-end
+SDU0Init = sum(SDU0Init,2)/MC; SDU0_ = sum(SDU0_,2)/MC;
+SDU0CllpsInit = sum(SDU0CllpsInit,2)/MC; SDU0Cllps_ = sum(SDU0Cllps_,2)/MC;
+SDU0Perm = sum(SDU0Perm,2)/MC; SDU0Perm_ = sum(SDU0Perm_,2)/MC;
+%---------------------------------
+X0Err = sum(X0Err,2)/MC; X0Err_ = sum(X0Err_,2)/MC;
+X0CllpsErr = sum(X0CllpsErr,2)/MC; X0CllpsErr_ = sum(X0CllpsErr_,2)/MC;
+X0PermErr = sum(X0PermErr,2)/MC; X0PermErr_ = sum(X0PermErr_,2)/MC;
 %---
+%SDU0_'
+%SDU0Cllps_'
+%SDU0Perm_'
+%SDInit
+X0Err_'
+X0CllpsErr_'
+X0PermErr_'
+if real == 0
+    plotRsltsLRMC(SDU0_, 0, SDU0Cllps_, SDU0Perm_,n,q,r,p,numBlocksTry_,MC,same,fill,real,T);
+end
+n,q
+toc
 function [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,real,idxFlag,idx)
     if real
         idx = find(X > 0);
@@ -158,14 +148,11 @@ function [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,rea
         idx = randperm(n * q);
         idx = idx(1:round(p * n * q));
     end
-    
     % Convert linear indices to subscripts
     [row, col] = ind2sub([n, q], idx);
-
     % Instantiate Y = X_Omega (Observed entries)
     Xzeros = zeros(n, q);
     Xzeros(idx) = X(idx);
-
     % Initialize cell arrays
     rowIdx = cell(q, 1); 
     colIdx = cell(n, 1);
@@ -181,30 +168,47 @@ function [Xzeros, rowIdx, colIdx, Xcol, Xrow,idx] = processMatrix(X, n, q, p,rea
         Xrow{j} = X(j, colIdx{j})';        
     end
 end
-%---
-function [Ustr,X,p] = getMovieLens(r)
-    A = readmatrix("ratings100K.xlsx");
-    %--------------------
-    %load("ratings1M.mat");
-    %--------------------
-    %load("ratings10M.mat")
-    n = max(A(:,1));
-    q = max(A(:,2));
-    X = zeros(n,q);
-    num = 0;
-    disp(num)
-    for k = 1 : size(A,1)
-        i = A(k,1);
-        j = A(k,2);
-        X(i,j) = A(k,3);
-        num = num + 1;
-        %if mod(k,100000) == 0
-        %    size(A,1),k
-        %end
+%--------------------------
+function [XzerosPerm, XzerosCllps,r_All] = processBlocks(rowIdx, Xcol, Xzeros, q, numBlocksTry, same, fill)
+    % Initialize output variables
+    XzerosPerm = Xzeros;
+    XzerosCllps = Xzeros;
+    r_All = cell(q,1);
+    for k = 1 : q
+        l_k = length(rowIdx{k});
+        numBlocks = min(numBlocksTry, l_k);
+        r_ = floor(l_k / numBlocks) * ones(numBlocks, 1);      
+        rem = mod(l_k,numBlocks);
+        if rem > 0
+            r_(1:rem) = r_(1:rem) + 1; %r_ is a vector of length numBlocks, 
+            %r_(end) = r_(end) + l_k - floor(l_k / numBlocks) * numBlocks;
+        end
+        r_All{k} = r_;
+        if ~same
+            pi_map = get_permutation_r(l_k, r_);
+        else
+            pi_map = 1:l_k; % Identity mapping if 'same' is true
+        end        
+        rowIdxPerm_k = rowIdx{k}(pi_map);
+        XcolPerm_k = Xzeros(rowIdxPerm_k, k);
+        XzerosPerm(rowIdxPerm_k, k) = Xcol{k};
+        start  = 1;
+        for s = 1 : numBlocks
+            stop = start + r_(s) - 1;
+            if fill == "mean"
+                avg = sum(XcolPerm_k(start:stop)) / r_(s);
+                XzerosCllps(rowIdxPerm_k(start:stop), k) = avg;                
+            elseif fill == "median"
+                XzerosCllps(rowIdxPerm_k(start:stop), k) = median(XcolPerm_k(start:stop));
+            elseif fill == "one"
+                XzerosCllps(rowIdxPerm_k(start), k) = sum(XcolPerm_k(start:stop));                
+            elseif fill == "sum"
+                XzerosCllps(rowIdxPerm_k(start:stop), k) = sum(XcolPerm_k(start:stop));                
+            else
+                XzerosCllps(rowIdxPerm_k(start:stop), k) = sum(XcolPerm_k(start:stop)) / r_(s);
+                XzerosCllps(rowIdxPerm_k(floor(start + (stop - start) / 2):stop), k) = median(XcolPerm_k(start:stop));
+            end
+            start = start + r_(s);
+        end
     end
-    p = num/(n*q);
-    %X = X';
-    %X = X(1:10000,1:10000);
-    [Ustr,~,~] = svds(X,r);
-    Ustr = Ustr(:,1:r);
 end

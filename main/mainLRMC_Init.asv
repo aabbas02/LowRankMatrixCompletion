@@ -9,14 +9,14 @@ addpath(genpath('.\utils'));
 cd(dir)    
 tic
 %---------------------------------
-r = 3;
+r = 5;
 real = 0;
-T = 10000;
+T = 1000;
 n = 1000;
 q = 1000;
-p = 0.05;
+p = 0.2;
 same = 0;
-MC = 1;
+MC = 25;
 %------------------------
 if real
     [Ustr,X,p] = getMovieLens(r);
@@ -29,7 +29,7 @@ else
     Bstr = randn(r,q);
     X  = Ustr*Bstr;
 end
-numBlocksTry_ = 5:1:15;
+numBlocksTry_ = 10:10:50;
 %-------------------------------
 % The unadorned SDU0 (or X0Err) are from the svd. SDU0_ and X0Err_ are from
 % subequent iterations of minimizing the collapsed objective.
@@ -40,6 +40,8 @@ X0Err = zeros(length(numBlocksTry_),MC); X0Err_ = zeros(length(numBlocksTry_),MC
 X0CllpsErr = zeros(length(numBlocksTry_),MC); X0CllpsErr_ = zeros(length(numBlocksTry_),MC);
 X0PermErr = zeros(length(numBlocksTry_),MC);  X0PermErr_ = zeros(length(numBlocksTry_),MC);
 fill = "mean"; %fill = "median"; %fill = "both";
+%fill = "one";
+%fill = "sum";
 %-----------------------
 if real % ground truth matrix read only once if the data are real
     idxFlag = 1; % idxFlag = 1 means generate indices for synthetic data  
@@ -60,7 +62,7 @@ for i = 1 : length(numBlocksTry_)
         SDU0(i,mc) = norm(Ustr - U0*(U0'*Ustr));        
         X0Err(i,mc) = norm(X0(idx) - Xzeros(idx))/norm(Xzeros(idx));
         % U0 from unpermuted plus iterations
-        T_init = 0;
+        T_init = 0; % skip iterations by setting T_init = 0
         [SDVals,Errs] = altMinwithP_LRMC(n,q, r, U0, Ustr, T_init, rowIdx, Xcol, colIdx, Xrow, X0,idx,Xzeros,real);
         SDU0_(i,mc) = SDVals(end);   
         X0Err_(i,mc) = Errs(end);  
@@ -103,11 +105,12 @@ for i = 1 : length(numBlocksTry_)
         X0CllpsErr(i,mc) = norm(X0Cllps(idx) - Xzeros(idx))/norm(Xzeros(idx));
         [Uproj,~,~] = qr(U0Cllps,'econ');
         SDU0Cllps(i,mc) = norm(Ustr - U0Cllps*(U0Cllps'*Ustr));
-        SDInit = norm(Ustr - Uproj*(Uproj'*Ustr));
+        SDInit = norm(Ustr - Uproj*(Uproj'*Ustr))
         idxFlag = 0;
+        T = 0;
         [XzerosPerm, rowIdxPerm, colIdxPerm, XcolPerm, XrowPerm,~] = processMatrix(XzerosPerm, n, q, p,real,idxFlag,idx);        
-        [SDVals,~] = minCllpsInit(n,q,r,r_All,U0Cllps, ...
-                                  Ustr,T, ...
+        [SDVals,~,~] = minCllpsInit(n,q,r,r_All,U0Cllps, ...
+                                  Ustr,Bstr,T, ...
                                   rowIdxPerm,XcolPerm, 0,0,0,0);   
         SDU0Cllps_(i,mc) = SDVals(end);        
         mc
@@ -129,7 +132,7 @@ X0Err_'
 X0CllpsErr_'
 X0PermErr_'
 if real == 0
-    plotRslts(SDU0_, 0, SDU0Cllps_, SDU0Perm_,n,q,r,p,numBlocksTry_,MC,same,fill,real,T);
+    plotRsltsLRMC(SDU0_, 0, SDU0Cllps_, SDU0Perm_,n,q,r,p,numBlocksTry_,MC,same,fill,real,T);
 end
 n,q
 toc
@@ -192,6 +195,10 @@ function [XzerosPerm, XzerosCllps,r_All] = processBlocks(rowIdx, Xcol, Xzeros, q
                 XzerosCllps(rowIdxPerm_k(start:stop), k) = avg;                
             elseif fill == "median"
                 XzerosCllps(rowIdxPerm_k(start:stop), k) = median(XcolPerm_k(start:stop));
+            elseif fill == "one"
+                XzerosCllps(rowIdxPerm_k(start), k) = sum(XcolPerm_k(start:stop));                
+            elseif fill == "sum"
+                XzerosCllps(rowIdxPerm_k(start:stop), k) = sum(XcolPerm_k(start:stop));                
             else
                 XzerosCllps(rowIdxPerm_k(start:stop), k) = sum(XcolPerm_k(start:stop)) / r_(s);
                 XzerosCllps(rowIdxPerm_k(floor(start + (stop - start) / 2):stop), k) = median(XcolPerm_k(start:stop));
@@ -199,5 +206,4 @@ function [XzerosPerm, XzerosCllps,r_All] = processBlocks(rowIdx, Xcol, Xzeros, q
             start = start + r_(s);
         end
     end
-
 end
