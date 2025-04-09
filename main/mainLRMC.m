@@ -9,7 +9,7 @@ addpath(genpath('.\utils'));
 cd(dir)    
 tic
 %---------------------------------
-r = 3;
+r = 5;
 real = 0;
 T = 3000;
 n = 1000;
@@ -113,9 +113,9 @@ for i = 1 : length(numBlocksTry_)
                                         rowIdxPerm,XcolPerm, 'zero','zero','zero',0);
         SDU0CllpsInit(i,mc) = norm(Ustr - U0Cllps*(U0Cllps'*Ustr));
         P_updt = 1;
-        T = 0;
+        T = 5000;
         [SDVals,Errs] = altGDMin_LRMC(n,q,r,r_All,p,U0Cllps, ...
-                                      Ustr,T, ...
+                                      Ustr,Bstr,T, ...
                                       rowIdxPerm,XcolPerm,colIdx,Xrow, X0Cllps,idx,XzerosPerm,real,P_updt);                
         SDU0Cllps_(i,mc) = SDVals(end);        
         mc

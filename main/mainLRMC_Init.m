@@ -16,7 +16,7 @@ n = 1000;
 q = 1000;
 p = 0.1;
 same = 0;
-MC = 15;
+MC = 1;
 %------------------------
 if real
     [Ustr,X,p] = getMovieLens(r);
@@ -29,7 +29,7 @@ else
     Bstr = randn(r,q);
     X  = Ustr*Bstr;
 end
-numBlocksTry_ = 40:10:50;
+numBlocksTry_ = 10;
 %-------------------------------
 % The unadorned SDU0 (or X0Err) are from the svd. SDU0_ and X0Err_ are from
 % subequent iterations of minimizing the collapsed objective.

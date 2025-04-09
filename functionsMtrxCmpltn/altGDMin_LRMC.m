@@ -1,5 +1,5 @@
 function [SDVals,objVals] = altGDMin_LRMC(n,q,r,r_All,p,Uinit, ...
-                                        Ustr,T, ...
+                                        Ustr,Bstr,T, ...
                                         rowIdx,Xcol,colIdx,Xrow, Xhat0,idx,Xzeros,real,P_updt)
     % Given U^{(0)}, B^{(0)}
     % Update P_j for all j in [q]. This is to to update rowIdx{j}
@@ -37,13 +37,12 @@ function [SDVals,objVals] = altGDMin_LRMC(n,q,r,r_All,p,Uinit, ...
     objVals(1) = norm(Xzeros(idx) - Xhat0(idx))/norm(Xzeros(idx));   
     for i = 1 : T
         err = 0;
-
         % V update
-        if i == 0 && P_updt == 1
+        if i == 1 && P_updt == 1
             V = V_init;
         else
             for j = 1 : q
-                V(:,j) = U(rowIdx{j},:)\Xcol{j};
+                V(:,j) = pinv(U(rowIdx{j},:))*Xcol{j};
             end
         end
         % P update
@@ -74,9 +73,10 @@ function [SDVals,objVals] = altGDMin_LRMC(n,q,r,r_All,p,Uinit, ...
         if real == 0
             [Uproj,~,~] = qr(U,'econ');
             SDVals(i + 1) = norm(Ustr - Uproj*(Uproj'*Ustr));  
-            if mod(i, 1) == 0
+            if mod(i, 100) == 0
                 disp(['P_updt = ', num2str(P_updt), '. Iteration = ', num2str(i), ...
                     '. SD = ', num2str(norm(Ustr - Uproj*(Uproj'*Ustr))), ...
+                    '. rel Err x = ', num2str(norm(U*V - Ustr*Bstr,'fro')/norm(Ustr*Bstr,'fro')),....
                     ' objVals = ', num2str(err)])
             end
         end 

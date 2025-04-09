@@ -40,7 +40,7 @@ for k =  1 : q
 end
 p = numObserved/(n*q);
 [~,S] = svds(Xinit/p);
-eta = 0.01/(S(1,1)^2*p); 
+eta = 0.1/(S(1,1)^2*p); 
 gradU = zeros(n,r);
 for t = 1 : T
     gradU = 0*gradU;
@@ -81,7 +81,7 @@ for t = 1 : T
     SDVals(t+1) = norm(Ustr - Uproj*(Uproj'*Ustr));    
     [Vproj,~,~] = qr(Bhat','econ');
     SDvalV =  norm(Vstr - Vproj*(Vproj'*Vstr));
-    if mod(t,10) == 0 && real == 0
+    if mod(t,100) == 0 && real == 0
         disp(['Cllps Init.', ' Iter =  ', num2str(t), '. ObjVal = ', num2str(err),  '. Gradient Norm = ', num2str(norm(gradU)), ...
             '. SD U = ', num2str(SDVals(t+1)), ...
             '. SD V = ', num2str(SDvalV),...
