@@ -5,9 +5,8 @@ function [SDVals,objVals,Uproj] = minCllpsInit(n,q,r,r_,Uinit, ...
 % why gradient descent for U on the collapsed objective instead of least-squares?
 % because, the collapsed matrix is different across all columns. 
 % chain Rule: https://tutorial.math.lamar.edu/classes/calciii/chainrule.aspx
-% computes gradient of U with respect to each of the q columns
-% for AltMin, T_in > 1, where T_in is the number of GD updates for U with B
-% fixed
+% To do: implement fullAltMin functionality for U update
+Bhat = zeros(r,q);
 [Vstr,~,~] = qr(Bstr','econ');
 U = Uinit;
 SDVals = zeros(T+1,1);
@@ -18,7 +17,6 @@ objVals = zeros(T+1,1);
 % Step - size calculation based off of operator norm of Xinit
 Xinit = zeros(n,q);
 numObserved = 0;
-Bhat = zeros(r,q);
 for k =  1 : q
     Ucllpsk = zeros(length(r_{k}),r);
     XcolCllpsk = zeros(length(r_{k}),1);
@@ -43,9 +41,9 @@ for k =  1 : q
 end
 p = numObserved/(n*q);
 [~,S] = svds(Xinit/p);
-eta = 0.1/(S(1,1)^2*p);
+eta = 0.001/(S(1,1)^2*p);
 gradU = zeros(n,r);
-B = zeros(r,q);
+B
 for t = 1 : T
     gradU = 0*gradU;
     err = 0;
@@ -65,9 +63,7 @@ for t = 1 : T
         %2. least - squares update
         if mod(t-1,T_in) == 0 % update at t = 1, ...,T_in + 1, 2*T_in + 1,...
             bk = pinv(Ucllpsk)*XcolCllpsk;
-            B(:,k) = bk;   
         end
-        bk = B(:,k);
         %3. get gradient with respect to Ucllpsk 
         diffk = Ucllpsk*bk - XcolCllpsk; % vector of cardinality |Omega_k|
         Bhat(:,k) = bk;
@@ -89,7 +85,7 @@ for t = 1 : T
     SDVals(t+1) = norm(Ustr - Uproj*(Uproj'*Ustr));    
     [Vproj,~,~] = qr(Bhat','econ');
     SDvalV =  norm(Vstr - Vproj*(Vproj'*Vstr));
-    if mod(t,25) == 0 && real == 0
+    if mod(t,10) == 0 && real == 0
         disp(['Cllps Init.', ' Iter =  ', num2str(t), '. ObjVal = ', num2str(err),  '. Gradient Norm = ', num2str(norm(gradU)), ...
             '. SD U = ', num2str(SDVals(t+1)), ...
             '. SD V = ', num2str(SDvalV),...
