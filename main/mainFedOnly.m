@@ -2,26 +2,21 @@ clc
 close all
 clear all
 dir = pwd;
-% For linux, replace '\' with '/'
-%idcs   = strfind(dir,'\');
-%newdir = dir(1:idcs(end)-1);
-%cd (newdir)
 cd ..
 addpath(genpath('.\functions'));
 cd(dir)    
 %---------------------------------
-r = 2;
-n = 500;
-q = 1000;
+r = 20;
+n = 5000;
+q = 5000;
 % sub sample X with probaility p
 p = 0.05;
-numWrkrs = 5;
+numWrkrs = 10;
 space = 25;
 T = 25 + space;
 delete(gcp('nocreate'))
-parpool(numWrkrs,'IdleTimeout',Inf,'SpmdEnabled',false)
 pool = gcp;
-MC = 1;
+MC = 25;
 tic 
 ID = randi(1e3)+5
 ID = 7891359
@@ -33,6 +28,7 @@ Bstar = randn(r,q);
 X  = U*Bstar;
 Ustr = U(:,1:r);
 Tsvd = 15;
+%{
 idx = randperm(n*q);
 idx = idx(1:round(p*n*q));
 idxC = setdiff(1:n*q,idx);
@@ -46,12 +42,13 @@ Xcol = cell(q,1); Xrow = cell(n,1);
 parfor j = 1 : q
     rowIdx{j} = row(col==j);
     Xcol{j} =  X(rowIdx{j},j);
-    if j <= n
-        colIdx{j} = col(row==j)
-        Xrow{j} = X(j,colIdx{j})';
-    end
 end
-saveName = "n_" + num2str(n) + "_q_" + num2str(q) + "_r_" + num2str(r) + "_p_"+...
+parfor j = 1 : n
+    colIdx{j} = col(row==j)
+    Xrow{j} = X(j,colIdx{j})';
+end
+%}
+saveVarName = "n_" + num2str(n) + "_q_" + num2str(q) + "_r_" + num2str(r) + "_p_"+...
             num2str(p) + "_MC_" + num2str(MC) + "_randID_" + num2str(ID) + ".mat";
 for mc = 1 : MC
     idx = randperm(n*q);
@@ -67,10 +64,10 @@ for mc = 1 : MC
     parfor j = 1 : q
        rowIdx{j} = row(col==j);
        Xcol{j} =  X(rowIdx{j},j);
-       if j <= n
-           colIdx{j} = col(row==j)
-           Xrow{j} = X(j,colIdx{j})';
-       end
+    end
+    parfor j = 1 : n
+       colIdx{j} = col(row==j)
+       Xrow{j} = X(j,colIdx{j})';        
     end
     %-----------------------------------------------------------------------------------
     % --- AltGD (Federated)
@@ -102,13 +99,11 @@ for mc = 1 : MC
     [SDAltGDMineta1(mc,:),timeAltGDMineta1(mc,:)] = altGDMin_T(r,eta_c, ...
                                                                Ustr,Xzeros, kAltGDMin*T,p, ...
                                                                rowIdx,Xcol,numWrkrs,Tsvd);
-    % --- 
-    %if  (mod(mc,1) == 0)
 
    mc
 end
 toc
-save(saveName,...
+save(saveVarName,...
     "SDAltMinPrvt","timeAltMinPrvt",...
     "SDAltGDMineta1","timeAltGDMineta1",...
     "SDAltMinParfor","timeAltMinParfor",...
@@ -117,8 +112,8 @@ save(saveName,...
     "SDAltGDFed1","timeAltGDFed1",...
     "n","p","q","r","numWrkrs","mc","T",...
     "numWrkrs");
-% 1
 MC = mc;
+% 1
 SDAltMinParfor = sum(SDAltMinParfor,1)/MC;
 timeAltMinParfor = sum(timeAltMinParfor,1)/MC;
 % 3
@@ -137,13 +132,13 @@ timeAltGDFed1 = sum(timeAltGDFed1,1)/MC;
 SDAltGDMineta1 = sum(SDAltGDMineta1,1)/MC;
 timeAltGDMineta1 = sum(timeAltGDMineta1,1)/MC;
 %---------------------------------------
-pltFedOnly(timeAltMinParfor, SDAltMinParfor, ...
-            timeAltMinPrvt, SDAltMinPrvt, timeAltGDFedHalf, SDAltGDFedHalf, ...
-            timeAltGDFed,SDAltGDFed, timeAltGDFed1,SDAltGDFed1,...
-            timeAltGDMineta1, SDAltGDMineta1,...
-            n, q, r, p, numWrkrs, MC, T,Tsvd)
+%pltFedOnly(timeAltMinParfor, SDAltMinParfor, ...
+%            timeAltMinPrvt, SDAltMinPrvt, timeAltGDFedHalf, SDAltGDFedHalf, ...
+%            timeAltGDFed,SDAltGDFed, timeAltGDFed1,SDAltGDFed1,...
+%            timeAltGDMineta1, SDAltGDMineta1,...
+%            n, q, r, p, numWrkrs, MC, T,Tsvd)
 
-saveFigFed(1,dir,21,saveName)
+saveFigFed(1,21,saveVarName)
 %---
 function pltFedOnly(timeAltMinParfor, SDAltMinParfor, ...
                     timeAltMinPrvt, SDAltMinPrvt, timeAltGDFedHalf, SDAltGDFedHalf, ...
@@ -200,9 +195,9 @@ function pltFedOnly(timeAltMinParfor, SDAltMinParfor, ...
     legend('Interpreter', 'Latex', 'Fontsize', 9);
     ylabel('$\mathrm{SD}(\mathbf{U}^{(t)}, \mathbf{U}^*)$', 'Interpreter', 'Latex', 'Fontsize', 15);
     xlabel('Time/seconds', 'FontSize', 11);
+
     
-    title("n = " + n + ", q = " + q +...
-        ", r = " + r + ", p = " + p + '.', ...
+    title(["n = " + n +  ", q = " + q + ", r = "+ r+ ", p = " + p +'.'],...
         'Interpreter', 'Latex', 'FontSize', 14);
     %
     %cores = feature('numCores');
@@ -213,15 +208,9 @@ function pltFedOnly(timeAltMinParfor, SDAltMinParfor, ...
     %savefig([stringTitle, '.fig']);
 end
 %---
-function saveFigFed(numData,dir,timeSD,saveName)
-    cd (dir)
-    clc
-    close all
-    %load("n_"+num2str(n)+"_q_"+num2str(q)+"_r_"+num2str(r)+"_p_"+num2str(p),...
-    %     +"_MC_"+num2str(mc) + "_randID_" + num2str(ID) + ".mat")
-    %load("1.mat");
+function saveFigFed(numData,timeSD,saveName)
     load(saveName)
-    %T = 0; % You need to define the value of T, as it is used in the code
+    %talk2MeLani    
     numWrkrs = 10; % Define the number of workers
     % --
     SDAltMinParfor_ = zeros(1e3,T+1);
@@ -244,10 +233,6 @@ function saveFigFed(numData,dir,timeSD,saveName)
     % --
     strt = 1;
     for i = 1 : numData
-        %load("n_"+num2str(n)+"_q_"+num2str(q)+"_r_"+num2str(r)+"_p_"+num2str(p),...
-        %      +"_MC_"+num2str(mc) + "_randID_" + num2str(ID) + ".mat")
-        %load([num2str(i) +'.mat'])
-        load(saveName)
         % --
         SDAltMinParfor_(strt:strt+mc-1,:) = SDAltMinParfor;
         timeAltMinParfor_(strt:strt+mc-1,:) = timeAltMinParfor;
@@ -269,108 +254,133 @@ function saveFigFed(numData,dir,timeSD,saveName)
         % -- 
         strt = strt + mc;
     end
-        MC = strt; %= legnth of SD/Time arrays
-        % -- 
-        SDAltMinParfor  = SDAltMinParfor_(1:MC,:);
-        timeAltMinParfor = timeAltMinParfor_(1:MC,:);
-        % --
-        SDAltMinPrvt = SDAltMinPrvt_(1:MC,:);
-        timeAltMinPrvt = timeAltMinPrvt_(1:MC,:);
-        % -- 
-        SDAltGDFedHalf = SDAltGDFedHalf_(1:MC,:);
-        timeAltGDFedHalf = timeAltGDFedHalf_(1:MC,:);
-        % -- 
-        SDAltGDFed = SDAltGDFed_(1:MC,:);
-        timeAltGDFed = timeAltGDFed_(1:MC,:);
-        % -- 
-        SDAltGDFed1 = SDAltGDFed1_(1:MC,:);
-        timeAltGDFed1 = timeAltGDFed1_(1:MC,:);
-        % -- 
-        SDAltGDMineta1 = SDAltGDMineta1_(1:MC,:);
-        timeAltGDMineta1 = timeAltGDMineta1_(1:MC,:);
-        %---
-        % 1
-        SDAltMinParfor = sum(SDAltMinParfor,1)/MC;
-        timeAltMinParfor = sum(timeAltMinParfor,1)/MC;
-        % 3
-        SDAltMinPrvt = sum(SDAltMinPrvt,1)/MC;
-        timeAltMinPrvt = sum(timeAltMinPrvt,1)/MC;
-        % 
-        SDAltGDFedHalf = sum(SDAltGDFedHalf,1)/MC;
-        timeAltGDFedHalf = sum(timeAltGDFedHalf,1)/MC;
-        % 5
-        SDAltGDFed = sum(SDAltGDFed,1)/MC;
-        timeAltGDFed = sum(timeAltGDFed,1)/MC;
-        % 
-        SDAltGDFed1 = sum(SDAltGDFed1,1)/MC;
-        timeAltGDFed1 = sum(timeAltGDFed1,1)/MC;
-        % 7
-        SDAltGDMineta1 = sum(SDAltGDMineta1,1)/MC;
-        timeAltGDMineta1 = sum(timeAltGDMineta1,1)/MC;
-        %------------ Downsample 
-        % 1
-        SDAltMinParfor = downsample(SDAltMinParfor,1);
-        timeAltMinParfor = downsample(timeAltMinParfor,1);
-        % 3
-        SDAltMinPrvt = downsample(SDAltMinPrvt,1);
-        timeAltMinPrvt = downsample(timeAltMinPrvt,1);
-        % 
-        SDAltGDFedHalf = downsample(SDAltGDFedHalf,4);
-        timeAltGDFedHalf = downsample(timeAltGDFedHalf,4);
-        % 5
-        SDAltGDFed = downsample(SDAltGDFed,4);
-        timeAltGDFed = downsample(timeAltGDFed,4);
-        % 
-        SDAltGDFed1 = downsample(SDAltGDFed1,4);
-        timeAltGDFed1 = downsample(timeAltGDFed1,4);
-        % 7
-        SDAltGDMineta1 = downsample(SDAltGDMineta1,5);
-        timeAltGDMineta1 = downsample(timeAltGDMineta1,5);
-        %timeSD = 36;
-        figure
-        semilogy(timeAltGDMineta1(timeAltGDMineta1 <= timeSD ),...
-                 SDAltGDMineta1(timeAltGDMineta1 <= timeSD ),'DisplayName', ...
-                'AltGDMin(Fed./Prvt.)', ...
-                'LineWidth',1.35,'Marker','square','MarkerSize',9, 'Color',"#0000FF")
-        hold on
-        semilogy(timeAltMinParfor(timeAltMinParfor <= timeSD ),...
-                 SDAltMinParfor(timeAltMinParfor <= timeSD),'DisplayName', ...
-                'AltMin(Fed./NotPrvt.)', ...
-                'LineWidth',1.35,'Marker','x','MarkerSize',9,'Color',"#D95319")
-        semilogy(timeAltMinPrvt(timeAltMinPrvt <= timeSD ),...
-                SDAltMinPrvt(timeAltMinPrvt <= timeSD),'DisplayName', ...
-               'AltMin(Fed./Prvt.)', ...
-               'LineWidth',1.35,'Marker','*','MarkerSize',9,'Color',"#EDB120")
-        %-
-        %semilogy(timeAltGDFedHalf(timeAltGDFedHalf <= timeSD ),...
-        %       SDAltGDFedHalf(timeAltGDFedHalf <= timeSD),'DisplayName', ...
-        %      'FactGD (Fed./Prvt. $c = 0.5$)', ...
-        %      'LineWidth',1.35,'Marker','diamond','MarkerSize',9,'Color',"0.72,0.27,1.00")
-        %-
-        semilogy(timeAltGDFed(timeAltGDFed <= timeSD ),...
-               SDAltGDFed(timeAltGDFed <= timeSD),'DisplayName', ...
-              'FactGD (Fed./Prvt. $c = 0.75$)', ...
-              'LineWidth',1.35,'Marker','diamond','MarkerSize',9,'Color',"#7E2F8E")
-        %-
-        %semilogy(timeAltGDFed1(timeAltGDFed1 <= timeSD ),...
-        %       SDAltGDFed1(timeAltGDFed1 <= timeSD),'DisplayName', ...
-        %      'FactGD (Fed./Prvt. $c = 1.0$)', ...
-        %      'LineWidth',1.35,'Marker','diamond','MarkerSize',9,'Color',"#7E2FEE")
-        grid on
-        legend('Interpreter','Latex','Fontsize',9.25, 'Location','Northeast')
-        yHndl = ylabel('$\mathrm{SD}(\mathbf{U}^{(t)}, \mathbf{U}^*)$','Interpreter','Latex','Fontsize',14.0);
-        yHndl.Position(1) = yHndl.Position(1) + 1.25;
-        yHndl.Position(2) = yHndl.Position(2) - 0.05*yHndl.Position(2);
-        xlabel('t/seconds','Fontsize',13,'Interpreter','Latex')
-        title(["n = "  num2str(n)  ", q = "  num2str(q) +...
-              ", r = "  num2str(r)  ", p = "  num2str(p)  ", Workers ="  num2str(numWrkrs)],...
-               'Interpreter', 'Latex', 'FontSize',14)
-        cores = feature('numCores');
-        stringTitle = ['Noisy_Fed_Wrkrs_',num2str(numWrkrs),'Max',num2str(cores),'_MC_',num2str(MC),...
-                          '_n_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
-                           'T_',num2str(T),'_id',num2str(randi(1e3,1))];
-        cd(dir)
-        exportgraphics(gcf,[stringTitle,'.pdf'])
+    MC = strt; %= legnth of SD/Time arrays
+    % --
+    SDAltMinParfor  = SDAltMinParfor_(1:MC,:);
+    timeAltMinParfor = timeAltMinParfor_(1:MC,:);
+    % --
+    SDAltMinPrvt = SDAltMinPrvt_(1:MC,:);
+    timeAltMinPrvt = timeAltMinPrvt_(1:MC,:);
+    % --
+    SDAltGDFedHalf = SDAltGDFedHalf_(1:MC,:);
+    timeAltGDFedHalf = timeAltGDFedHalf_(1:MC,:);
+    % --
+    SDAltGDFed = SDAltGDFed_(1:MC,:);
+    timeAltGDFed = timeAltGDFed_(1:MC,:);
+    % --
+    SDAltGDFed1 = SDAltGDFed1_(1:MC,:);
+    timeAltGDFed1 = timeAltGDFed1_(1:MC,:);
+    % --
+    SDAltGDMineta1 = SDAltGDMineta1_(1:MC,:);
+    timeAltGDMineta1 = timeAltGDMineta1_(1:MC,:);
+    %---
+    % 1
+    SDAltMinParfor = sum(SDAltMinParfor,1)/MC;
+    timeAltMinParfor = sum(timeAltMinParfor,1)/MC;
+    % 3
+    SDAltMinPrvt = sum(SDAltMinPrvt,1)/MC;
+    timeAltMinPrvt = sum(timeAltMinPrvt,1)/MC;
+    %
+    SDAltGDFedHalf = sum(SDAltGDFedHalf,1)/MC;
+    timeAltGDFedHalf = sum(timeAltGDFedHalf,1)/MC;
+    % 5
+    SDAltGDFed = sum(SDAltGDFed,1)/MC;
+    timeAltGDFed = sum(timeAltGDFed,1)/MC;
+    %
+    SDAltGDFed1 = sum(SDAltGDFed1,1)/MC;
+    timeAltGDFed1 = sum(timeAltGDFed1,1)/MC;
+    % 7
+    SDAltGDMineta1 = sum(SDAltGDMineta1,1)/MC;
+    timeAltGDMineta1 = sum(timeAltGDMineta1,1)/MC;
+    figure % SD Against Iterations
+    semilogy(1:25, SDAltGDMineta1(1:25),'DisplayName', ...
+        'AltGDMin(Fed./Prvt.)', ...
+        'LineWidth',1.35,'Marker','square','MarkerSize',9, 'Color',"#0000FF")
+    hold on
+    semilogy(1:25, SDAltMinParfor(1:25),'DisplayName', ...
+        'AltMin(Fed./NotPrvt.)', ...
+        'LineWidth',1.35,'Marker','x','MarkerSize',9,'Color',"#D95319")
+    semilogy(1:25, SDAltMinPrvt(1:25),'DisplayName', ...
+        'AltMin(Fed./Prvt.)', ...
+        'LineWidth',1.35,'Marker','*','MarkerSize',9,'Color',"#EDB120")
+    semilogy(1:25, SDAltGDFed(1:25),'DisplayName', ...
+        'FactGD (Fed./Prvt. $c = 0.75$)', ...
+        'LineWidth',1.35,'Marker','diamond','MarkerSize',9,'Color',"#7E2F8E")
+
+    grid on
+    legend('Interpreter','Latex','Fontsize',9.25, 'Location','Northeast')
+    yHndl = ylabel('$\mathrm{SD}(\mathbf{U}^{(t)}, \mathbf{U}^*)$','Interpreter','Latex','Fontsize',14.0);
+    yHndl.Position(1) = yHndl.Position(1) + 1.25;
+    yHndl.Position(2) = yHndl.Position(2) - 0.05*yHndl.Position(2);
+    xlabel('Iterations','Fontsize',13,'Interpreter','Latex')
+    title(["n = " + n + ", q = " + q  + ", r = "+ r + ", p = " + p +  ", Workers ="  + numWrkrs],...
+        'Interpreter', 'Latex', 'FontSize',14)
+    cores = feature('numCores');
+    stringTitle = ['Iter_FedOnly_Wrkrs_',num2str(numWrkrs),'Max',num2str(cores),'_MC_',num2str(MC),...
+        '_n_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+        'T_',num2str(T),'_id',num2str(randi(1e3,1))];
+    exportgraphics(gcf,[stringTitle,'.pdf'])
+    %------------ Downsample before SD against time plot
+    % 1
+    SDAltMinParfor = downsample(SDAltMinParfor,1);
+    timeAltMinParfor = downsample(timeAltMinParfor,1);
+    % 3
+    SDAltMinPrvt = downsample(SDAltMinPrvt,1);
+    timeAltMinPrvt = downsample(timeAltMinPrvt,1);
+    %
+    SDAltGDFedHalf = downsample(SDAltGDFedHalf,4);
+    timeAltGDFedHalf = downsample(timeAltGDFedHalf,4);
+    % 5
+    SDAltGDFed = downsample(SDAltGDFed,4);
+    timeAltGDFed = downsample(timeAltGDFed,4);
+    %
+    SDAltGDFed1 = downsample(SDAltGDFed1,4);
+    timeAltGDFed1 = downsample(timeAltGDFed1,4);
+    % 7
+    SDAltGDMineta1 = downsample(SDAltGDMineta1,5);
+    timeAltGDMineta1 = downsample(timeAltGDMineta1,5);
+    figure % SD Against time
+    semilogy(timeAltGDMineta1(timeAltGDMineta1 <= timeSD ),...
+        SDAltGDMineta1(timeAltGDMineta1 <= timeSD ),'DisplayName', ...
+        'AltGDMin(Fed./Prvt.)', ...
+        'LineWidth',1.35,'Marker','square','MarkerSize',9, 'Color',"#0000FF")
+    hold on
+    semilogy(timeAltMinParfor(timeAltMinParfor <= timeSD ),...
+        SDAltMinParfor(timeAltMinParfor <= timeSD),'DisplayName', ...
+        'AltMin(Fed./NotPrvt.)', ...
+        'LineWidth',1.35,'Marker','x','MarkerSize',9,'Color',"#D95319")
+    semilogy(timeAltMinPrvt(timeAltMinPrvt <= timeSD ),...
+        SDAltMinPrvt(timeAltMinPrvt <= timeSD),'DisplayName', ...
+        'AltMin(Fed./Prvt.)', ...
+        'LineWidth',1.35,'Marker','*','MarkerSize',9,'Color',"#EDB120")
+    %-
+    %semilogy(timeAltGDFedHalf(timeAltGDFedHalf <= timeSD ),...
+    %       SDAltGDFedHalf(timeAltGDFedHalf <= timeSD),'DisplayName', ...
+    %      'FactGD (Fed./Prvt. $c = 0.5$)', ...
+    %      'LineWidth',1.35,'Marker','diamond','MarkerSize',9,'Color',"0.72,0.27,1.00")
+    %-
+    semilogy(timeAltGDFed(timeAltGDFed <= timeSD ),...
+        SDAltGDFed(timeAltGDFed <= timeSD),'DisplayName', ...
+        'FactGD (Fed./Prvt. $c = 0.75$)', ...
+        'LineWidth',1.35,'Marker','diamond','MarkerSize',9,'Color',"#7E2F8E")
+    %-
+    %semilogy(timeAltGDFed1(timeAltGDFed1 <= timeSD ),...
+    %       SDAltGDFed1(timeAltGDFed1 <= timeSD),'DisplayName', ...
+    %      'FactGD (Fed./Prvt. $c = 1.0$)', ...
+    %      'LineWidth',1.35,'Marker','diamond','MarkerSize',9,'Color',"#7E2FEE")
+    grid on
+    legend('Interpreter','Latex','Fontsize',9.25, 'Location','Northeast')
+    yHndl = ylabel('$\mathrm{SD}(\mathbf{U}^{(t)}, \mathbf{U}^*)$','Interpreter','Latex','Fontsize',14.0);
+    yHndl.Position(1) = yHndl.Position(1) + 1.25;
+    yHndl.Position(2) = yHndl.Position(2) - 0.05*yHndl.Position(2);
+    xlabel('t/seconds','Fontsize',13,'Interpreter','Latex')
+    title(["n = " + n + ", q = " + q  + ", r = "+ r + ", p = " + p +  ", Workers ="  + numWrkrs],...
+        'Interpreter', 'Latex', 'FontSize',14)
+    cores = feature('numCores');
+    stringTitle = ['Time_FedOnly_Wrkrs_',num2str(numWrkrs),'Max',num2str(cores),'_MC_',num2str(MC),...
+        '_n_',num2str(n),'_q_',num2str(q),'_r_',num2str(r),'_p_',num2str(p),...
+        'T_',num2str(T),'_id',num2str(randi(1e3,1))];
+    exportgraphics(gcf,[stringTitle,'.pdf'])
 end
 %---
 function [SDVals, timeArr] = factGDEta(Xzeros,r,Ustr,T,p,rowIdx,colIdx,Xcol,numWrkrs,Tsvd,eta)

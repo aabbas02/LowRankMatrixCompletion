@@ -9,11 +9,11 @@ cd (newdir)
 addpath(genpath('.\functions'));
 cd(dir)    
 %---------------------------------
-r = 10;
+r = 20;
 n = 5000;
 q = 5000;
 % sub sample X with probaility p
-p = 0.1;
+p = 0.05;
 numWrkrs = 10;
 space = 25;
 T = 25 + space;
@@ -44,11 +44,11 @@ Xcol = cell(q,1); Xrow = cell(n,1);
 parfor j = 1 : q
     rowIdx{j} = row(col==j);
     Xcol{j} =  X(rowIdx{j},j);
-    if j <= n
-        colIdx{j} = col(row==j)
-        Xrow{j} = X(j,colIdx{j})';
-    end
 end
+parfor j = 1 : n
+    colIdx{j} = col(row==j)
+    Xrow{j} = X(j,colIdx{j})';    
+end    
 for mc = 1 : MC
     idx = randperm(n*q);
     idx = idx(1:round(p*n*q));
@@ -63,11 +63,11 @@ for mc = 1 : MC
     parfor j = 1 : q
        rowIdx{j} = row(col==j);
        Xcol{j} =  X(rowIdx{j},j);
-       if j <= n
-           colIdx{j} = col(row==j)
-           Xrow{j} = X(j,colIdx{j})';
-       end
     end
+    parfor j = 1 : n
+       colIdx{j} = col(row==j)
+       Xrow{j} = X(j,colIdx{j})';        
+    end        
     %-----------------------------------------------------------------------------------
     % --- AltGD (Federated)
     kAltGD = 2;

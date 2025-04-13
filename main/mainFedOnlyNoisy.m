@@ -20,7 +20,7 @@ T = 25 + space;
 delete(gcp('nocreate'))
 parpool(numWrkrs,'IdleTimeout',Inf,'SpmdEnabled',false)
 pool = gcp;
-MC = 1;
+MC = 25;
 tic 
 ID = randi(1e3)+5
 %ID = 7891359
@@ -32,9 +32,10 @@ Ustr = U(:,1:r);
 Bstar = randn(r,q);
 X  = U*Bstar;
 % add noise N
-N = 1e0*randn(n,q)/(sqrt(r)*cond(X)^3);
-%noiseVar = 1e-10;
-%N = noiseVar*randn(n,q);
+%N = 1e0*randn(n,q)/(sqrt(r)*cond(X)^3);
+%noiseVar = 1e-7;
+noiseVar = 1/( sqrt(r)*cond(X)^3 );
+N = sqrt(noiseVar)*randn(n,q);
 X  =  X + N;
 Tsvd = 15;
 idx = randperm(n*q);
