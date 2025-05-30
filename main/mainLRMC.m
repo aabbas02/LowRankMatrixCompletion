@@ -139,7 +139,7 @@ X0Err_'
 X0CllpsErr_'
 X0PermErr_'
 if real == 0
-    plotRsltsLRMC(SDU0_, 0, SDU0Cllps_, SDU0Perm_,n,q,r,p,numBlocksTry_,MC,same,fill,real,T);
+    plotRsltsLRMC(SDU0_, 0, SDU0Cllps_, SDU0Perm_,n,q,r,p,numBlocksTry_,MC,same,fill,real,T_init);
 end
 n,q
 toc

@@ -119,7 +119,7 @@ function [SDVals,times] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_,ykCllps
             gradU = 0*gradU;
             t_in = 0;
             while t_in == 0 || t_in <= T_in && norm(gradU) >= 1e-10 % do a minimum of 1 iteration and a maximum of T_in iterations
-                gradU = 0*gradU;
+                gradU = 0*gradU;                                    % for altGDMin, T_in = 1.
                 for k = 1 : q
                     gradU = gradU + Ak_{k}'*(Ak_{k}*X(:,k)-ykPerm_{k})*B(:,k)';
                 end

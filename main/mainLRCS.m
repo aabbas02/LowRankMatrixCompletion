@@ -9,8 +9,8 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-n = 2000; q = 1000; r = 3;
-m = 100; numBlocks = 25;   %effectively, m_new = numBlocks
+n = 500; q = 500; r = 3;
+m = 100; numBlocks = 50;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 100;
 TAltMin = 0.5*T+1; T_LS = 200;
