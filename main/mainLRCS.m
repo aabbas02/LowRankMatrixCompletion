@@ -12,9 +12,10 @@ cd(dir)
 n = 500; q = 500; r = 3;
 m = 100; numBlocks = 50;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
-T = 100;
-TAltMin = 0.5*T+1; T_LS = 200;
-MC = 25;
+T = 200;
+TAltMin = 25; %0.5*T+1; % Outer AltMin Iterations 
+T_LS = 200; % Maximum GD iterations for each LS problem,usually terminates because of norm of gradient
+MC = 5;
 same = 1; % same permutation across columns
 % generate rank-r X*
 Ustr = orth(randn(n,r));
@@ -34,7 +35,7 @@ SDVals_sLcl = zeros(MC,T+1); time_sLcl = zeros(MC,T+1);
 SDVals_Perm = zeros(MC,T+1); time_Perm = zeros(MC,T+1);
 SDVals_AltMin = zeros(MC,TAltMin+1); time_AltMin=zeros(MC,TAltMin+1);
 SDVals_AltMinExct = zeros(MC,TAltMin+1); time_AltMinExct=zeros(MC,TAltMin+1);
-eta_c = 0.1;
+eta_c = 0.50;
 for mc = 1 : MC
     if same
         pi_map = get_permutation_r(m,r_);
@@ -65,23 +66,19 @@ for mc = 1 : MC
     %---------------------------------------
     %[U0Perm,~,~] = svd(MPerm,"econ");
     %U0Perm = U0Perm(:,1:r);
-    %------------------------------
-    updtP = 0; altMin = 0; exact = 0;
-    [SDVals_UnPerm(mc,:),time_UnPerm(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r, ...
-        T,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
-    %------------------------------------
-    updtP = 0; altMin = 0; exact = 0;
-    [SDVals_UnPerm(mc,:),time_UnPerm(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r, ...
-        T,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
-    %-------------------------------------
+    %--- Unpermuted
+    %updtP = 0; altMin = 0; exact = 0;
+    %[SDVals_UnPerm(mc,:),time_UnPerm(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r, ...
+    %    T,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
+    %--- AltGDMin with P
     updtP = 1; altMin = 0; exact = 0;
     [SDVals_sLcl(mc,:), time_sLcl(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r, ...
         T,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
-    %--------------------------------------
-    updtP = 1; altMin = 1; exact = 1;
-    [SDVals_AltMinExct(mc,:), time_AltMinExct(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
-        r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);    
-    %--------------------------------------
+    %--- AltMin Kroneckker LS with P
+    %updtP = 1; altMin = 1; exact = 1;
+    %[SDVals_AltMinExct(mc,:), time_AltMinExct(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
+    %    r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);    
+    %--- AltMin using GD with P
     updtP = 1; altMin = 1; exact = 0;
     [SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
         r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);

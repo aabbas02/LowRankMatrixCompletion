@@ -1,0 +1,116 @@
+clc
+close all
+clear all
+dir = pwd;
+% For linux, replace '\' with '/'
+cd ..
+%addpath(genpath('.\functions'));
+addpath(genpath('.\functionsMtrxSnsng'));
+addpath(genpath('.\utils'));
+cd(dir)    
+%---------------------------------
+n = 500; q = 500; r = 3;
+m = 100; 
+%numBlocks_ = : 20: 100;
+%numBlocks_ = [25,50,100];
+numBlocks_ = [5,10,20,25];
+numAltGDMin = zeros(1,length(numBlocks_));
+numAltMin = zeros(1,length(numBlocks_));
+TAltGDMin = 200;
+TAltMin = 50; %0.5*T+1; % Outer AltMin Iterations 
+T_LS = 200; % Maximum GD iterations for each LS problem,usually terminates because of norm of gradient
+MC = 101;
+same = 1; % same permutation across columns
+% generate rank-r X*
+Ustr = orth(randn(n,r));
+Bstr = randn(r,q);
+X  = Ustr*Bstr;
+% generate q matrices A_k of size m x n, m << n
+Ak_ = cell(q,1);
+AkCllps_ = cell(q,1);
+yk_ = cell(q,1);
+ykCllps_ = cell(q,1);
+ykPerm_ = cell(q,1);
+M = zeros(n,q);
+MCllps = zeros(n,q);
+MPerm = zeros(n,q);
+SDVals_UnPerm = zeros(MC,TAltGDMin+1); time_UnPerm = zeros(MC,TAltGDMin+1); 
+SDVals_sLcl = zeros(MC,TAltGDMin+1); time_sLcl = zeros(MC,TAltGDMin+1);
+SDVals_Perm = zeros(MC,TAltGDMin+1); time_Perm = zeros(MC,TAltGDMin+1);
+SDVals_AltMin = zeros(MC,TAltMin+1); time_AltMin=zeros(MC,TAltMin+1);
+SDVals_AltMinExct = zeros(MC,TAltMin+1); time_AltMinExct=zeros(MC,TAltMin+1);
+eta_c = 0.5;
+for p = 1 : length(numBlocks_)
+    numBlocks = numBlocks_(p);
+    r_ = ones(1,numBlocks)*(m/numBlocks);
+    for mc = 1 : MC
+        if same
+            pi_map = get_permutation_r(m,r_);
+        end
+        for k = 1 : q
+            Ak_{k} = randn(m,n);
+            yk_{k} = Ak_{k}*X(:,k);
+            M(:, k)  = Ak_{k}'*yk_{k};         
+            if ~same
+                pi_map = get_permutation_r(m,r_);
+            end
+            ykPerm_{k} = yk_{k}(pi_map);
+            AkCllps_{k} = zeros(length(r_),n);
+            ykCllps_{k} = zeros(length(r_),1);
+            for i = 1 : length(r_)
+                start = sum(r_(1:i)) - r_(i) + 1;
+                stop  = sum(r_(1:i));
+                AkCllps_{k}(i,:) = sum(Ak_{k}(start:stop,:));
+                ykCllps_{k}(i) = sum(ykPerm_{k}(start:stop,:));
+            end
+            MCllps(:, k) = AkCllps_{k}'*ykCllps_{k};
+        end
+        [U0,~,~,] = svd(M,"econ");
+        U0 = U0(:,1:r); 
+        %-----------------------------------
+        [U0Cllps,~,~] = svd(MCllps,"econ");
+        U0Cllps = U0Cllps(:,1:r);
+        %---------------------------------------
+        %[U0Perm,~,~] = svd(MPerm,"econ");
+        %U0Perm = U0Perm(:,1:r);
+        %--- Unpermuted
+        %updtP = 0; altMin = 0; exact = 0;
+        %[SDVals_UnPerm(mc,:),time_UnPerm(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, yk_,Ak_, yk_, U0,r, ...
+        %    T,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
+        %--- AltGDMin with P
+        updtP = 1; altMin = 0; exact = 0;
+        [SDVals_sLcl(mc,:), time_sLcl(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r, ...
+            TAltGDMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
+        if SDVals_sLcl(mc,end) <= 10^(-10)
+            numAltGDMin(p) = numAltGDMin(p) + 1;
+        end
+        %--- AltMin Kroneckker LS with P
+        %updtP = 1; altMin = 1; exact = 1;
+        %[SDVals_AltMinExct(mc,:), time_AltMinExct(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
+        %    r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);    
+        %--- AltMin using GD with P
+        updtP = 1; altMin = 1; exact = 0;
+        [SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
+            r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
+
+        if SDVals_AltMin(mc,end) <= 10^(-10)
+            numAltMin(p) = numAltMin(p) + 1;
+        end
+   
+        mc
+    end
+end
+prbAltGDMin = numAltGDMin/MC;
+prbAltMin = numAltMin/MC;
+%---
+plotRslts(time_sLcl, SDVals_sLcl, ...
+    time_UnPerm, SDVals_UnPerm, ...
+    time_AltMinExct,SDVals_AltMinExct,...
+    time_AltMin, SDVals_AltMin, ...
+    n,q,r,m,numBlocks,MC,same,T_LS,eta_c);
+
+plotRsltsPhsTrnstn(numBlocks_, ...
+                   prbAltGDMin, ...
+                   prbAltMin,...
+                   n,q,r,m,numBlocks,MC,same,T_LS,eta_c)
+  
