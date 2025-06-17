@@ -14,15 +14,14 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
     % x ticks
     xticks(1:length(numBlocks_));
     xticklabels(numBlocks_)
-    ax = gca; % Get the current axis
-    ax.XAxis.FontSize = 14; % Set the font size of the x-tick labels to 14
+    gca.XAxis.FontSize = 25;
+
     % y ticks
     yticks(rVals)
     yticklabels(rVals)
     %set(gca,'yTickLabel','fontsize',12)    
-    %gca.YAxis.FontSize = 25;
-    ax = gca; % Get the current axis
-    ax.YAxis.FontSize = 14; % Set the font size of the x-tick labels to 14
+    gca.YAxis.FontSize = 25;
+
     % Set colormap to grayscale
     colormap(gray);
     
@@ -30,7 +29,7 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
     caxis([0 1]);
     
     % Add colorbar for reference
-    colorbar("FontSize",12);
+    colorbar;
     
     % Optional: remove axis ticks if you want a clean image display
     %axis off;

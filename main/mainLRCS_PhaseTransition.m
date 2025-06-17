@@ -11,13 +11,14 @@ cd(dir)
 %---------------------------------
 n = 500; q = 500;  rVals = [1,2,3,4,5,6,7,8,9,10];
 m = 100; 
-numBlocks_ = [5, 10, 20, 25, 50];
+%numBlocks_ = [5, 10, 20, 25, 50];
+numBlocks_ = [5,10];
 numAltGDMin = zeros(length(rVals),length(numBlocks_));
 numAltMin = zeros(length(rVals),length(numBlocks_));
 TAltGDMin = 200;
 TAltMin = 50; %0.5*T+1; % Outer AltMin Iterations 
 T_LS = 200; % Maximum GD iterations for each LS problem,usually terminates because of norm of gradient
-MC = 25;
+MC = 100;
 same = 1; % same permutation across columns
 
 % generate q matrices A_k of size m x n, m << n
