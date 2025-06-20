@@ -21,7 +21,6 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
         yticks(rVals)
         yticklabels(rVals)
         %set(gca,'yTickLabel','fontsize',12)    
-        %gca.YAxis.FontSize = 25;
         ax = gca; % Get the current axis
         ax.YAxis.FontSize = 14; % Set the font size of the x-tick labels to 14
         % Set colormap to grayscale
@@ -32,18 +31,25 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
         colorbar("FontSize",12);
         % Optional: remove axis ticks if you want a clean image display
         %axis off;
-        %legend('Interpreter', 'Latex', 'Fontsize', 9);
-        %ylabel("$\Pr[SD(U^(T),U^*)] < 10^{-10}$","FontSize",14,'Interpreter','Latex')
         xlabel('Number of blocks', 'FontSize',17, 'Interpreter','Latex')    
         ylabel('Rank of $X^*$', 'Interpreter','Latex','FontSize',17)
         title('AltGDMin. $\Pr [SD(U^{(T)},U^*) \leq 10^{-10}]$','Interpreter','Latex','FontSize',15)
         stringTitle = ['AltGDMin_PhaseTrnstn2d_MC_', num2str(MC), ...
                        '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), ... 
                        '_m_', num2str(m), '_numBlocks_',num2str(numBlocks), ...
-                       '_same_',num2str(same),'_T_LS_', num2str(T_LS), '_eta_c_',num2str(eta_c), '_randID_',ID];
-        
+                       '_same_',num2str(same),'_T_LS_', num2str(T_LS), '_eta_c_',num2str(eta_c), '_randID_',ID];        
+		[rows, cols] = size(prbAltGDMin);
+		% Draw vertical grid lines
+		for col = 0.5:1:cols+0.5
+			line([col col], [0.5 rows+0.5], 'Color', 'k', 'LineStyle', '-', 'LineWidth', 0.5);
+		end
+		% Draw horizontal grid lines
+		for row = 0.5:1:rows+0.5
+			line([0.5 cols+0.5], [row row], 'Color', 'k', 'LineStyle', '-', 'LineWidth', 0.5);
+		end
         savefig([stringTitle, '.fig']);
         exportgraphics(gca,[stringTitle,'.pdf'],"Resolution",300) 
+		% Get the axis limits
     end
     % ---- AltMin
     if any(any(prbAltMin))
@@ -71,8 +77,6 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
         colorbar("FontSize",12);
         % Optional: remove axis ticks if you want a clean image display
         %axis off;
-        %legend('Interpreter', 'Latex', 'Fontsize', 9);
-        %ylabel("$\Pr[SD(U^(T),U^*)] < 10^{-10}$","FontSize",14,'Interpreter','Latex')
         xlabel('Number of blocks', 'FontSize',17, 'Interpreter','Latex')    
         ylabel('Rank of $X^*$', 'Interpreter','Latex','FontSize',17)
         title('AltMin. $\Pr [SD(U^{(T)},U^*) \leq 10^{-10}]$','Interpreter','Latex','FontSize',15)
@@ -80,9 +84,18 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
                        '_n_', num2str(n), '_q_', num2str(q), '_r_', num2str(r), ... 
                        '_m_', num2str(m), '_numBlocks_',num2str(numBlocks), ...
                        '_same_',num2str(same),'_T_LS_', num2str(T_LS),'_randID_',ID];
-        
+		[rows, cols] = size(prbAltMin);
+		% Draw vertical grid lines
+		for col = 0.5:1:cols+0.5
+			line([col col], [0.5 rows+0.5], 'Color', 'k', 'LineStyle', '-', 'LineWidth', 0.5);
+		end
+		% Draw horizontal grid lines
+		for row = 0.5:1:rows+0.5
+			line([0.5 cols+0.5], [row row], 'Color', 'k', 'LineStyle', '-', 'LineWidth', 0.5);
+		end		
         savefig([stringTitle, '.fig']);
         exportgraphics(gca,[stringTitle,'.pdf'],"Resolution",300) 
+		% Get the axis limits
     end
     cd (curDir)
 end
