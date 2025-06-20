@@ -9,13 +9,13 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-n = 500; q = 500; r = 3;
-m = 100; numBlocks = 50;   %effectively, m_new = numBlocks
+n = 500; q = 500; r = 1;
+m = 100; numBlocks = 10;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 200;
 TAltMin = 25; %0.5*T+1; % Outer AltMin Iterations 
 T_LS = 200; % Maximum GD iterations for each LS problem,usually terminates because of norm of gradient
-MC = 5;
+MC = 25;
 same = 1; % same permutation across columns
 % generate rank-r X*
 Ustr = orth(randn(n,r));
@@ -35,7 +35,7 @@ SDVals_sLcl = zeros(MC,T+1); time_sLcl = zeros(MC,T+1);
 SDVals_Perm = zeros(MC,T+1); time_Perm = zeros(MC,T+1);
 SDVals_AltMin = zeros(MC,TAltMin+1); time_AltMin=zeros(MC,TAltMin+1);
 SDVals_AltMinExct = zeros(MC,TAltMin+1); time_AltMinExct=zeros(MC,TAltMin+1);
-eta_c = 0.50;
+eta_c = 0.30;
 for mc = 1 : MC
     if same
         pi_map = get_permutation_r(m,r_);
@@ -79,9 +79,9 @@ for mc = 1 : MC
     %[SDVals_AltMinExct(mc,:), time_AltMinExct(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
     %    r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);    
     %--- AltMin using GD with P
-    updtP = 1; altMin = 1; exact = 0;
-    [SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
-        r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
+    %updtP = 1; altMin = 1; exact = 0;
+    %[SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
+    %    r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
 
     mc
 end

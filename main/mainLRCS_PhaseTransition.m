@@ -9,16 +9,16 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-n = 500; q = 500;  rVals = [1,2,3,4,5,6,7,8,9,10];
+n = 500; q = 500;  rVals = [2,4,6,8,10];
 m = 100; 
-%numBlocks_ = [5, 10, 20, 25, 50];
-numBlocks_ = [5,10];
+numBlocks_ = [5, 10, 20, 25, 50];
+%numBlocks_ = [10];
 numAltGDMin = zeros(length(rVals),length(numBlocks_));
 numAltMin = zeros(length(rVals),length(numBlocks_));
 TAltGDMin = 200;
 TAltMin = 50; %0.5*T+1; % Outer AltMin Iterations 
 T_LS = 200; % Maximum GD iterations for each LS problem,usually terminates because of norm of gradient
-MC = 100;
+MC = 25;
 same = 1; % same permutation across columns
 
 % generate q matrices A_k of size m x n, m << n
@@ -82,13 +82,13 @@ for u = 1 : length(rVals)
                 numAltGDMin(u, p) = numAltGDMin(u, p) + 1;
             end  
             %--- AltMin using GD with P
-            %updtP = 1; altMin = 1; exact = 0;
-            %[SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
-            %    r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c);
-            %
-            %if SDVals_AltMin(mc,end) <= 10^(-10)
-            %    numAltMin(u, p) = numAltMin(u, p) + 1;
-            %end
+            updtP = 1; altMin = 1; exact = 0;
+            [SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
+                r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,0); % 0 is a place-holder, not an actual argument.
+            
+            if SDVals_AltMin(mc,end) <= 10^(-10)
+                numAltMin(u, p) = numAltMin(u, p) + 1;
+            end
             %
             mc
         end
