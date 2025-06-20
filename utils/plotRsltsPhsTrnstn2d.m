@@ -8,8 +8,21 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
     figure
     %grid on        
 
-    % Display using imagesc
     imagesc(prbAltGDMin);
+
+    % Get the axis limits
+    [rows, cols] = size(prbAltGDMin);
+
+    % Draw vertical grid lines
+    for col = 0.5:1:cols+0.5
+        line([col col], [0.5 rows+0.5], 'Color', 'k', 'LineStyle', '-', 'LineWidth', 0.5);
+    end
+
+    % Draw horizontal grid lines
+    for row = 0.5:1:rows+0.5
+        line([0.5 cols+0.5], [row row], 'Color', 'k', 'LineStyle', '-', 'LineWidth', 0.5);
+    end
+
 
     % x ticks
     xticks(1:length(numBlocks_));
@@ -32,7 +45,10 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
     % Add colorbar for reference
     colorbar("FontSize",12);
     
-    % Optional: remove axis ticks if you want a clean image display
+
+    % Optional: remove tick marks
+    %set(gca, 'XTick', [], 'YTick', []);
+
     %axis off;
     %legend('Interpreter', 'Latex', 'Fontsize', 9);
     %ylabel("$\Pr[SD(U^(T),U^*)] < 10^{-10}$","FontSize",14,'Interpreter','Latex')
@@ -46,5 +62,6 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
     
     savefig([stringTitle, '.fig']);
     exportgraphics(gca,[stringTitle,'.pdf'],"Resolution",300)
+
     cd (curDir)
 end
