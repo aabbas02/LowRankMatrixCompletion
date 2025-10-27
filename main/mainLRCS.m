@@ -15,7 +15,7 @@ r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 200;
 TAltMin = 25; %0.5*T+1; % Outer AltMin Iterations 
 T_LS = 200; % Maximum GD iterations for each LS problem,usually terminates because of norm of gradient
-MC = 15;
+MC = 1;
 same = 1; % same permutation across columns
 % generate rank-r X*
 Ustr = orth(randn(n,r));
