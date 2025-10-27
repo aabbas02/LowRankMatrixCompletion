@@ -9,13 +9,13 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-n = 500; q = 500; r = 5;
+n = 500; q = 500; r = 3;
 m = 100; numBlocks = 10;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 200;
 TAltMin = 25; %0.5*T+1; % Outer AltMin Iterations 
 T_LS = 200; % Maximum GD iterations for each LS problem,usually terminates because of norm of gradient
-MC = 15;
+MC = 125;
 same = 1; % same permutation across columns
 % generate rank-r X*
 Ustr = orth(randn(n,r));
@@ -79,16 +79,16 @@ for mc = 1 : MC
     % ---------------------
     % ----- COLLAPSED -----
     % ---------------------
-    % AltGDMin with P - Collapsed Only
+    % AltGDMin with P - Collapsed
     updtP = 1; altMin = 0; exact = 0; cllpsOnly = 1;
     [SDVals_sLclCllps(mc,:), time_sLclCllps(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r, ...
         T,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c,eta_L,cllpsOnly);
-    %--- AltMin Kronecker LS with P - Collapsed Only
+    %--- AltMin Kronecker LS with P - Collapsed
     %updtP = 1; altMin = 1; exact = 1; cllpsOnly = 1;
     %[SDVals_AltMinExctCllps(mc,:), time_AltMinExctCllps(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
     %    r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c,eta_L,cllpsOnly);    
-    %--- AltMin using GD with P - Collapsed Only
-    updtP = 1; altMin = 1; exact = 0; cllpsOnly = 1;
+    %--- AltMin using GD with P - Collapsed
+    updtP = 1; altMin = 1; exact = 0; cllpsOnly = 0;
     [SDVals_AltMinCllps(mc,:), time_AltMinCllps(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
         r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c,eta_L,cllpsOnly);
     % ---------------------
@@ -102,9 +102,9 @@ for mc = 1 : MC
     %[SDVals_AltMinExct(mc,:), time_AltMinExct(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
     %    r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c,eta_L,cllpsOnly);    
     %--- AltMin using GD with P - not Collapsed
-    updtP = 1; altMin = 1; exact = 0; cllpsOnly = 0;
-    [SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
-        r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c,eta_L,cllpsOnly);
+    %updtP = 1; altMin = 1; exact = 0; cllpsOnly = 0;
+    %[SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
+    %    r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c,eta_L,cllpsOnly);
     mc
 end
 %---

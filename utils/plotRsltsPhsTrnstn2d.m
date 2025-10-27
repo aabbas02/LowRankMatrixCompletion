@@ -18,7 +18,7 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
         ax = gca; % Get the current axis
         ax.XAxis.FontSize = 14; % Set the font size of the x-tick labels to 14
         % y ticks
-        yticks(rVals)
+        yticks(1:length(rVals))
         yticklabels(rVals)
         %set(gca,'yTickLabel','fontsize',12)    
         ax = gca; % Get the current axis
@@ -63,7 +63,7 @@ function plotRsltsPhsTrnstn2d(numBlocks_, rVals, ...
         ax = gca; % Get the current axis
         ax.XAxis.FontSize = 14; % Set the font size of the x-tick labels to 14
         % y ticks
-        yticks(rVals)
+        yticks(1:length(rVals))
         yticklabels(rVals)
         %set(gca,'yTickLabel','fontsize',12)    
         %gca.YAxis.FontSize = 25;

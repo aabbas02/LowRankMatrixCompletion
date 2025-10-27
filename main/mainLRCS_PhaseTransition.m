@@ -9,9 +9,9 @@ addpath(genpath('.\functionsMtrxSnsng'));
 addpath(genpath('.\utils'));
 cd(dir)    
 %---------------------------------
-n = 500; q = 500;  rVals = [2,4,6,8,10];
+n = 500; q = 500;  rVals = [6,8,10];
 m = 100; 
-numBlocks_ = [5, 10, 20, 25, 50];
+numBlocks_ = [5, 10];
 %numBlocks_ = [10];
 numAltGDMin = zeros(length(rVals),length(numBlocks_));
 numAltMin = zeros(length(rVals),length(numBlocks_));

@@ -33,7 +33,7 @@ MPerm = zeros(n,q);
 SDVals_sLcl_eta1 = zeros(MC,T+1); time_sLcl_eta1 = zeros(MC,T+1);
 SDVals_sLcl_eta2 = zeros(MC,T+1); time_sLcl_eta2 = zeros(MC,T+1);
 SDVals_sLcl_eta3 = zeros(MC,T+1); time_sLcl_eta3 = zeros(MC,T+1);
-eta1 = 0.1;
+eta1 = 0.3;
 eta2 = 0.5;
 eta3 = 0.9;
 SDVals_AltMin = zeros(MC,TAltMin+1); time_AltMin=zeros(MC,TAltMin+1);
@@ -87,5 +87,5 @@ end
 plotEtaRslts(eta1,time_sLcl_eta1, SDVals_sLcl_eta1, ...
              eta2, time_sLcl_eta2, SDVals_sLcl_eta2,...
              eta3, time_sLcl_eta3, SDVals_sLcl_eta3,...
-                   time_AltMin, SDVals_AltMin,...
-                   n,q,r,m,numBlocks,MC,same,T_LS,eta3)
+             time_AltMin, SDVals_AltMin,...
+             n,q,r,m,numBlocks,MC,same,T_LS,eta3)
