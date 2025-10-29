@@ -12,8 +12,8 @@ n = 500; q = 500; r = 5;
 m = 100; numBlocks = 10;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 200;
-noiseVars = [0 1e-15 1e-10 1e-6 1e-4 1e-3];
-MC = 3;
+noiseVars = [0 1e-15 1e-6 1e-4 1e-3];
+MC = 125;
 same = 1; % same permutation across columns
 %------------------------------------
 TAltMin = 25; %0.5*T+1; % Outer AltMin Iterations 
@@ -34,17 +34,18 @@ MCllps = zeros(n,q);
 MPerm = zeros(n,q);
 time_UnPerm = zeros(MC,T+1); SDVals_UnPerm = zeros(MC, T+1);
 %-------------------------------------------------------
-SDVals_sLcl = zeros(MC,T+1); time_sLcl = zeros(MC,T+1);
-SDVals_AltMinExct = zeros(MC,TAltMin+1); time_AltMinExct=zeros(MC,TAltMin+1);
-SDVals_AltMin = zeros(MC,TAltMin+1); time_AltMin=zeros(MC,TAltMin+1);
+SDVals_sLcl = zeros(length(noiseVars), MC,T+1); time_sLcl = zeros(length(noiseVars), MC, T+1);
+SDVals_AltMinExct = zeros(length(noiseVars), MC,TAltMin+1); time_AltMinExct=zeros(length(noiseVars), MC,TAltMin+1);
+SDVals_AltMin = zeros(length(noiseVars), MC,TAltMin+1); time_AltMin=zeros(length(noiseVars), MC,TAltMin+1);
 %-------------------------------------------------------
-SDVals_sLclCllps = zeros(MC,T+1); time_sLclCllps = zeros(MC,T+1);
-SDVals_AltMinExctCllps = zeros(MC,TAltMin+1); time_AltMinExctCllps = zeros(MC,TAltMin+1);
-SDVals_AltMinCllps = zeros(MC,TAltMin+1); time_AltMinCllps =zeros(MC,TAltMin+1);
+SDVals_sLclCllps = zeros(length(noiseVars), MC,T+1); time_sLclCllps = zeros(length(noiseVars), MC,T+1);
+SDVals_AltMinExctCllps = zeros(length(noiseVars), MC,TAltMin+1); time_AltMinExctCllps = zeros(length(noiseVars), MC,TAltMin+1);
+SDVals_AltMinCllps = zeros(length(noiseVars), MC,TAltMin+1); time_AltMinCllps =zeros(length(noiseVars), MC,TAltMin+1);
 %------------------------------------------------------
 eta_c = 0.3;
 eta_L = 1;
-for noiseVar = noiseVars
+for h = 1 : length(noiseVars)
+    noiseVar = noiseVars(h);
     for mc = 1 : MC
         if same
             pi_map = get_permutation_r(m,r_);
@@ -99,7 +100,7 @@ for noiseVar = noiseVars
         % --- UNCOLLAPSED -----
         % ---------------------
         updtP = 1; altMin = 0; exact = 0; cllpsOnly = 0;
-        [SDVals_sLcl(mc,:), time_sLcl(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r, ...
+        [SDVals_sLcl(h, mc,:), time_sLcl(h, mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_,AkCllps_, ykCllps_, U0Cllps,r, ...
             T,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c,eta_L,cllpsOnly);
         %--- AltMin Kronecker LS with P - not Collapsed Only
         %updtP = 1; altMin = 1; exact = 1; cllpsOnly = 0;
@@ -107,19 +108,18 @@ for noiseVar = noiseVars
         %    r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c,eta_L,cllpsOnly);    
         %--- AltMin using GD with P - not Collapsed Only
         updtP = 1; altMin = 1; exact = 0; cllpsOnly = 0;
-        [SDVals_AltMin(mc,:), time_AltMin(mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
+        [SDVals_AltMin(h, mc,:), time_AltMin(h, mc,:)] = altGDMin_MtrxSensingPerm(Ak_, ykPerm_, AkCllps_, ykCllps_, U0Cllps, ...
             r,TAltMin,Ustr,r_,updtP,same,altMin,T_LS,exact,eta_c,eta_L,cllpsOnly);
         mc,noiseVar
     end
-    %---
-    plotRslts(time_sLcl, SDVals_sLcl, ...
-        time_UnPerm, SDVals_UnPerm, ...
-        time_AltMinExct,SDVals_AltMinExct,...
-        time_AltMin, SDVals_AltMin, ...
-        time_sLclCllps,SDVals_sLclCllps,...
-        time_AltMinExctCllps, SDVals_AltMinExctCllps,...
-        time_AltMinCllps, SDVals_AltMinCllps, ...
-        n,q,r,m,numBlocks,MC,same,T_LS,eta_c,eta_L,noiseVar);    
 end
 
-      
+    %---
+plotRsltsNoise(time_sLcl, SDVals_sLcl, ...
+    time_UnPerm, SDVals_UnPerm, ...
+    time_AltMinExct, SDVals_AltMinExct,...
+    time_AltMin, SDVals_AltMin, ...
+    time_sLclCllps, SDVals_sLclCllps,...
+    time_AltMinExctCllps, SDVals_AltMinExctCllps,...
+    time_AltMinCllps, SDVals_AltMinCllps, ...
+    n,q,r,m,numBlocks,MC,same,T_LS,eta_c,eta_L,noiseVars);          
