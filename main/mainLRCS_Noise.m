@@ -13,7 +13,7 @@ m = 100; numBlocks = 10;   %effectively, m_new = numBlocks
 r_ = ones(1,numBlocks)*(m/numBlocks);
 T = 200;
 noiseVars = [0 1e-15 1e-6 1e-4 1e-3];
-MC = 125;
+MC = 3;
 same = 1; % same permutation across columns
 %------------------------------------
 TAltMin = 25; %0.5*T+1; % Outer AltMin Iterations 
