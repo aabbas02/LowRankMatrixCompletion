@@ -1,0 +1,158 @@
+function [SDVals,times] = altGDMin_and_altMin(Ak_, ykPerm_,AkCllps_,ykCllps_, ...
+    Uinit,r,T,Ustr,r_,updtP,same, ...
+    altMin,T_LS,exact, eta_c, eta_L, cllpsOnly, distributed)
+	% This function implements altGDMin and altMin (exact U least-squares update and gradient descent update U)
+    % Desription of arguments:
+    % AltGDMin wout Perm: updtP = 0, Uinit = U0, Ak_ = Ak, ykPerm_ = yk, AkCllps_ = Ak, ykCllps_ = yk
+	% AltGDMin with Perm: updtP = 1, Uinit = U0Cllps, Ak_ = Ak, ykPerm_ = ykPerm, AkCllps_ = AkCllps_, ykCllps_ = ykCllps_
+	% To only use collapsed measurements with either algorithm, set cllpsOnly = 1
+    % For AltMin, set altMin = 1
+    % For distributed implmentations of either (AltGDMin or AltMin) algorithm, set distributed = 1
+    %---
+    if cllpsOnly
+        updtP = 0;
+        Ak_ = AkCllps_;
+        ykPerm_ = ykCllps_;
+    end
+    m = size(Ak_{1}, 1);
+    n = size(Ak_{1}, 2);
+    SDVals = zeros(T+1,1);
+    times = zeros(T+1,1);
+    U = Uinit;
+    SDVals(1) = norm((eye(n) - U*U')*Ustr ,'fro');
+    q = length(ykPerm_);
+    B = zeros(r,q);
+    gradU = zeros(n,r);
+    % Convert cells to matrices
+    %if updtP && same
+        yHat = zeros(m,q);
+        yPerm = zeros(m,q);
+        for k =  1 : q
+            yPerm(:,k) = ykPerm_{k};
+        end
+    %end
+    if altMin 
+        T_in = T_LS;     % AltGDMin does one 1 iteration, AltMin does maximum T_LS iterations 
+        if exact
+            y_all = cat(1,ykPerm_{:});
+            M_sns = zeros(q*m,n*r);
+        end
+    else
+        T_in = 1;
+    end    
+    for i = 1 : T
+        tStart = tic;
+        if distributed
+            parfor k = 1 : q
+                % Least-squares B_k update
+                if i == 1 % collapsed least-squares with measurements = number of blocks
+                    B(:, k) = pinv(AkCllps_{k}*U)*ykCllps_{k};
+                else % full m measurements least-squares
+                    B(:, k) = pinv(Ak_{k}*U)*ykPerm_{k};
+                end
+                if updtP 
+                    yHatk = Ak_{k}*U*B(:,k);
+                    yHat(:,k) = yHatk;
+                    if same == 0 % if different permutation across columns, solve for P_k while in the for loop from k 1 through q and apply P to Ak_{k}
+                        for s = 1 : length(r_)
+                            start = sum(r_(1:s)) - r_(s) + 1;
+                            stop = sum(r_(1:s));
+                            [~,idx1] = sort(yHatk(start:stop));
+                            [~,idx2] = sort(ykPerm_{k}(start:stop));
+                            idx1 = start - 1 + idx1;
+                            idx2 = start - 1 + idx2;
+                            Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
+                        end                    
+                    end
+                end
+            end
+        else
+            for k = 1 : q
+                % Least-squares B_k update
+                if i == 1 % collapsed least-squares with measurements = number of blocks
+                    B(:, k) = pinv(AkCllps_{k}*U)*ykCllps_{k};
+                else % full m measurements least-squares
+                    B(:, k) = pinv(Ak_{k}*U)*ykPerm_{k};
+                end
+                if updtP 
+                    yHatk = Ak_{k}*U*B(:,k);
+                    yHat(:,k) = yHatk;
+                    if same == 0 % if different permutation across columns, solve for P_k while in the for loop from k 1 through q and apply P to Ak_{k}
+                        for s = 1 : length(r_)
+                            start = sum(r_(1:s)) - r_(s) + 1;
+                            stop = sum(r_(1:s));
+                            [~,idx1] = sort(yHatk(start:stop));
+                            [~,idx2] = sort(ykPerm_{k}(start:stop));
+                            idx1 = start - 1 + idx1;
+                            idx2 = start - 1 + idx2;
+                            Ak_{k}(idx2,:) = Ak_{k}(idx1,:);
+                        end                    
+                    end
+                end
+            end
+        end
+        if updtP && same == 1
+            for s =  1 : length(r_)
+                start = sum(r_(1:s)) - r_(s) + 1;
+                stop = sum(r_(1:s));
+                C = yPerm(start:stop,:)*yHat(start:stop,:)';
+                M = matchpairs(-C,1e100); % M is a matrix with 2 columns and m rows,  % The second column has ascending
+                                         % indices in order 1, ..., m
+                                         % The first column has the
+                                         % corresponding/matching row indices
+                                         % 5,1 means P(5,1) = 1, i.e., 
+                                         % row 5 matched to 1
+                idx  = M(:,1);
+                idx = start - 1  + idx;
+                for k = 1 : q
+                    Ak_{k}(idx,:) = Ak_{k}(start:stop,:);       
+                    if exact
+                        M_sns((k-1)*m+1 : k*m,:) = kron(B(:,k)',Ak_{k});
+                    end
+                end
+            end
+        end
+        % U update
+        if altMin && exact % U update by exact least - squares
+            Uvec = M_sns\y_all;
+            U = reshape(Uvec,[n,r]);
+            tStrtQR = tic;
+            [Uproj,~,~] = qr(U,'econ');
+            tQR = toc(tStrtQR);
+            times(i+1) = times(i) + toc(tStart)  - tQR;          
+            SDVals(i + 1) = norm( Ustr - Uproj*(Uproj'*Ustr) ,'fro' );       
+        else % AltGDMin or AltMin using Gradient Descent
+            X = U*B;
+            if i == 1
+                if altMin % calculate step size only from the first iteration
+                    L = norm(Ak_{k},2)^2*norm(B,"fro")^2;
+                    eta = eta_L/L; 
+                else
+                    maxSigma = norm(X);
+                    eta = eta_c/(m*maxSigma^2);
+                end
+            end
+            gradU = 0*gradU;
+            t_in = 0;
+            while t_in == 0 || t_in <= T_in && norm(gradU) >= 1e-10 % do a minimum of 1 iteration (t_in == 0) and a maximum of T_in iterations
+                gradU = 0*gradU;                                    % for altGDMin, T_in = 1.
+                for k = 1 : q
+                    gradU = gradU + Ak_{k}'*(Ak_{k}*X(:,k) - ykPerm_{k})*B(:,k)';
+                end
+                U = U - eta*gradU;
+                X = U*B;
+                t_in = t_in + 1;
+            end
+            tStrtQR = tic;
+            [Uproj,~,~] = qr(U,'econ');
+            tQR = toc(tStrtQR);
+            if altMin
+                times(i+1) = times(i) + toc(tStart)  - tQR;
+            else
+                times(i+1) = times(i) + toc(tStart);
+                U = Uproj;
+            end
+        end
+        SDVals(i + 1) = norm( Ustr - Uproj*(Uproj'*Ustr) ,'fro' );
+    end
+end
