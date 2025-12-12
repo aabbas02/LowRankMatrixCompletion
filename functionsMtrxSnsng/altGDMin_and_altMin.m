@@ -125,7 +125,7 @@ function [SDVals,times] = altGDMin_and_altMin(Ak_, ykPerm_,AkCllps_,ykCllps_, ..
             X = U*B;
             if i == 1
                 if altMin % calculate step size only from the first iteration
-                    L = norm(Ak_{1},2)^2*norm(B,"fro")^2;
+                    L = norm(Ak_{k},2)^2*norm(B,"fro")^2;
                     eta = eta_L/L; 
                 else
                     maxSigma = norm(X);
