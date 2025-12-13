@@ -4,4 +4,5 @@ Note: Please make sure to have the MATLAB parallel computing toolbox installed. 
 Files description:
 
 main/mainAll.m reproduces the results for both distributed and centralized implementations of the proposed and benchmark algorithms.
+
 main/mainFedOnly.m reproduces the results for only the distributed implementation of the proposed and benchmark algorithms.
