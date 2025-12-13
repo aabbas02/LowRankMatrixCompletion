@@ -3,6 +3,7 @@ close all
 clear all
 dir = pwd;
 % For linux, replace '\' with '/'
+% To do: replace with using cd .. instead of string finding
 idcs   = strfind(dir,'\');
 newdir = dir(1:idcs(end)-1);
 cd (newdir)
