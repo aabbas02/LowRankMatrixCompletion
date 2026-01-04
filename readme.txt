@@ -1,4 +1,6 @@
-Note: Please make sure to have the MATLAB parallel computing toolbox installed. To reproduce results from the paper "Efficient federated low rank matrix completion" https://ieeexplore.ieee.org/document/10975055, please run the files in the "main folder."
+Note: Please make sure to have the MATLAB parallel computing toolbox installed.
+
+To reproduce results from the paper "Efficient federated low rank matrix completion" https://ieeexplore.ieee.org/document/10975055, please run the files in the "main folder."
 
 
 Files description:
