@@ -1,8 +1,8 @@
 Note: Please make sure to have the MATLAB parallel computing toolbox installed.
 
-To reproduce results from the paper "Efficient federated low rank matrix completion" https://ieeexplore.ieee.org/document/10975055, please run the files in the "main folder."
+- To reproduce results from the paper "Efficient federated low rank matrix completion" https://ieeexplore.ieee.org/document/10975055, please run the files in the "main folder."
 
-For a distributed dpython implementation using AWS EC-2 instances, please contact the author Ahmed Ali Abbasi at email: ahmedabbasi000@gmail.com
+- For a distributed dpython implementation using AWS EC-2 instances, please contact the author Ahmed Ali Abbasi at email: ahmedabbasi000@gmail.com
 
 Files description:
 
