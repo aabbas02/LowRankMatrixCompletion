@@ -11,8 +11,7 @@ The code for a subset (real data experiments only) is included here.
 Paper URL: https://arxiv.org/pdf/2509.09820
 
 For [1],
-- Use the default branch:
-- To reproduce results from the paper "Efficient federated low rank matrix completion" https://ieeexplore.ieee.org/document/10975055, please run the files in the "main folder." Please make sure to have the MATLAB parallel computing toolbox installed.
+- Use the default branch.
 - For a distributed python implementation using AWS EC-2 instances, please contact the author Ahmed Ali Abbasi at email: ahmedabbasi000@gmail.com
 
 For [2], switch to the branch "robustMtrxCompletion"
