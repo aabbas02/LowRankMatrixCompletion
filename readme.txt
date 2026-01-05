@@ -14,7 +14,7 @@ For [1],
 - Use the default branch.
 - For a distributed python implementation using AWS EC-2 instances, please contact the author Ahmed Ali Abbasi at email: ahmedabbasi000@gmail.com
 
-For [2], switch to the branch "robustMtrxCompletion"
+For [2], switch to the branch "robustMtrxCompltn"
 
 For [3], switch to the branch "withPermutation"
 
