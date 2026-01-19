@@ -1,13 +1,13 @@
 This repository contains code to reproduce experiments in three low rank matrix completion papers: 
 
-[1] Efficient Federated Low Rank Matrix Completion
+[1] Efficient Federated Low Rank Matrix Completion.
 Paper URL: https://ieeexplore.ieee.org/abstract/document/10975055/
 
-[2] Byzantine-Resilient Federated Alternating Gradient Descent and Minimization for Partly-Decoupled Low Rank Matrix Learning
+[2] Byzantine-Resilient Federated Alternating Gradient Descent and Minimization for Partly-Decoupled Low Rank Matrix Learning.
 Paper URL: https://icml.cc/virtual/2025/poster/44370
 The code for a subset (real data experiments only) is included here.
 
-[3] Locally Permuted Low Rank Column-wise Sensing
+[3] Locally Permuted Low Rank Column-wise Sensing.
 Paper URL: https://arxiv.org/pdf/2509.09820
 
 For [1],
