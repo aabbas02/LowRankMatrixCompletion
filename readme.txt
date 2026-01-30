@@ -10,12 +10,12 @@ The code for a subset (real data experiments only) is included here.
 [3] Locally Permuted Low Rank Column-wise Sensing.
 Paper URL: https://arxiv.org/pdf/2509.09820
 
-For [1],
+To reproduce the results in [1],
 - Use the default branch "trsnsctns".
 - For a distributed python implementation using AWS EC-2 instances, please contact the author Ahmed Ali Abbasi at email: ahmedabbasi000@gmail.com
 
-For [2], switch to the branch "robustMtrxCompltn"
+To reproduce the results in [2], switch to the branch "robustMtrxCompltn"
 
-For [3], switch to the branch "withPermutation"
+To reproduce the results in [3], switch to the branch "withPermutation"
 
 To be done: merge the different branches and include instructions on how to run the code.
