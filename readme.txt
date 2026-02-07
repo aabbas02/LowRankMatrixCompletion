@@ -9,6 +9,7 @@ The code for a subset (real data experiments only) is included here.
 
 [3] Locally Permuted Low Rank Column-wise Sensing.
 Paper URL: https://arxiv.org/pdf/2509.09820
+Paper URL: https://ieeexplore.ieee.org/abstract/document/11300958/
 
 To reproduce the results in [1],
 - Use the default branch "trsnsctns".
